@@ -1,9 +1,10 @@
 #!/usr/bin/env node
+import "dotenv/config";
 import { Command } from "commander";
 import { getHeadSha, getRemoteRepo } from "./git.js";
-import { agentCommitId } from "./types.js";
 
 const API_URL = process.env.REIN_API_URL ?? "http://localhost:3000";
+const SUPABASE_SECRET_KEY = process.env.SUPABASE_SECRET_KEY;
 
 const program = new Command();
 
@@ -19,19 +20,30 @@ program
   .option("--repo <repo>", "Repository (defaults to origin remote)")
   .option("--api <url>", "Rein API URL", API_URL)
   .action(async (opts) => {
+    if (!SUPABASE_SECRET_KEY) {
+      console.error(
+        "Missing SUPABASE_SECRET_KEY. Set it in .env for authenticated API requests."
+      );
+      process.exit(1);
+    }
+
     const gitSha = opts.sha ?? getHeadSha();
     const repo = opts.repo ?? getRemoteRepo();
-    const id = agentCommitId(gitSha);
 
     const res = await fetch(`${opts.api}/agent-commits`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        apikey: SUPABASE_SECRET_KEY,
+      },
       body: JSON.stringify({ git_sha: gitSha, repo }),
     });
 
     if (!res.ok) {
       const err = await res.text();
-      console.error(`Failed to register agent commit: ${err}`);
+      console.error(
+        `Failed to register agent commit (${res.status}): ${err || res.statusText}`
+      );
       process.exit(1);
     }
 

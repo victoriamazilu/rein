@@ -10,11 +10,14 @@
     "build": "tsc",
     "dev": "tsx watch src/server.ts",
     "start": "node dist/server.js",
-    "cli": "tsx src/cli.ts"
+    "cli": "tsx src/cli.ts",
+    "db:setup": "node scripts/setup-db.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
+    "@supabase/server": "^1.2.0",
     "commander": "^13.1.0",
+    "dotenv": "^16.4.7",
     "hono": "^4.7.0"
   },
   "devDependencies": {

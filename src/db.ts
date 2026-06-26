@@ -1,61 +1,51 @@
-import { DatabaseSync } from "node:sqlite";
+import type { SupabaseClient } from "@supabase/server/peer/supabase-js";
 import { agentCommitId, type AgentCommit } from "./types.js";
 
-const SCHEMA = `
-  CREATE TABLE IF NOT EXISTS agent_commits (
-    id         TEXT PRIMARY KEY,
-    git_sha    TEXT NOT NULL UNIQUE,
-    repo       TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now'))
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_agent_commits_repo ON agent_commits(repo);
-  CREATE INDEX IF NOT EXISTS idx_agent_commits_git_sha ON agent_commits(git_sha);
-`;
-
 export class AgentCommitStore {
-  private db: DatabaseSync;
+  constructor(private supabase: SupabaseClient) {}
 
-  constructor(path: string) {
-    this.db = new DatabaseSync(path);
-    this.db.exec(SCHEMA);
-  }
-
-  create(gitSha: string, repo: string): AgentCommit {
+  async create(gitSha: string, repo: string): Promise<AgentCommit> {
     const id = agentCommitId(gitSha);
-    this.db
-      .prepare(
-        `INSERT INTO agent_commits (id, git_sha, repo) VALUES (?, ?, ?)`
-      )
-      .run(id, gitSha, repo);
-    return this.getBySha(gitSha)!;
+    const { data, error } = await this.supabase
+      .from("agent_commits")
+      .insert({ id, git_sha: gitSha, repo })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data as AgentCommit;
   }
 
-  getById(id: string): AgentCommit | null {
-    return (
-      (this.db
-        .prepare(`SELECT * FROM agent_commits WHERE id = ?`)
-        .get(id) as AgentCommit | undefined) ?? null
-    );
+  async getById(id: string): Promise<AgentCommit | null> {
+    const { data, error } = await this.supabase
+      .from("agent_commits")
+      .select()
+      .eq("id", id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as AgentCommit | null) ?? null;
   }
 
-  getBySha(gitSha: string): AgentCommit | null {
-    return (
-      (this.db
-        .prepare(`SELECT * FROM agent_commits WHERE git_sha = ?`)
-        .get(gitSha) as AgentCommit | undefined) ?? null
-    );
+  async getBySha(gitSha: string): Promise<AgentCommit | null> {
+    const { data, error } = await this.supabase
+      .from("agent_commits")
+      .select()
+      .eq("git_sha", gitSha)
+      .maybeSingle();
+
+    if (error) throw error;
+    return (data as AgentCommit | null) ?? null;
   }
 
-  listByRepo(repo: string): AgentCommit[] {
-    return this.db
-      .prepare(
-        `SELECT * FROM agent_commits WHERE repo = ? ORDER BY created_at DESC`
-      )
-      .all(repo) as unknown as AgentCommit[];
-  }
+  async listByRepo(repo: string): Promise<AgentCommit[]> {
+    const { data, error } = await this.supabase
+      .from("agent_commits")
+      .select()
+      .eq("repo", repo)
+      .order("created_at", { ascending: false });
 
-  close(): void {
-    this.db.close();
+    if (error) throw error;
+    return (data ?? []) as AgentCommit[];
   }
 }
