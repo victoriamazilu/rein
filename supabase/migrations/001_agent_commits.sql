@@ -59,6 +59,9 @@ returns table (
 )
 language sql stable
 as $$
+  with parsed as (
+    select websearch_to_tsquery('english', coalesce(query_text, '')) as tsq
+  )
   select
     ac.id,
     ac.sha,
@@ -67,22 +70,23 @@ as $$
     ac.notes_for_future_agents,
     ac.embedding_text,
 
-    1 - (ac.embedding <=> query_embedding) as vector_similarity,
+    coalesce(1 - (ac.embedding <=> query_embedding), 0)::float as vector_similarity,
 
-    ts_rank_cd(
-      ac.search_vector,
-      plainto_tsquery('english', query_text)
-    ) as keyword_rank,
+    coalesce(
+      ts_rank_cd(ac.search_vector, parsed.tsq),
+      0
+    )::float as keyword_rank,
 
     (
-      0.65 * (1 - (ac.embedding <=> query_embedding)) +
-      0.35 * ts_rank_cd(ac.search_vector, plainto_tsquery('english', query_text))
-    ) as combined_score
+      0.65 * coalesce(1 - (ac.embedding <=> query_embedding), 0) +
+      0.35 * coalesce(ts_rank_cd(ac.search_vector, parsed.tsq), 0)
+    )::float as combined_score
 
   from public.agent_commits ac
+  cross join parsed
   where
-    ac.search_vector @@ plainto_tsquery('english', query_text)
-    or ac.embedding is not null
+    ac.embedding is not null
+    or (parsed.tsq is not null and ac.search_vector @@ parsed.tsq)
 
   order by combined_score desc
   limit match_count;
