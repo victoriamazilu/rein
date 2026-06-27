@@ -107,4 +107,58 @@ export async function fetchRecentGitHubCommits(
   return commits.slice(0, limit);
 }
 
-export type { GitHubCommit, GitHubRepo };
+type GitHubCommitFile = {
+  filename: string;
+  status: string;
+  additions: number;
+  deletions: number;
+};
+
+type GitHubCommitDetail = {
+  sha: string;
+  stats?: {
+    additions: number;
+    deletions: number;
+    total: number;
+  };
+  files?: GitHubCommitFile[];
+};
+
+function mapGitHubChangeType(status: string): string {
+  if (status === "removed") return "deleted";
+  return status;
+}
+
+export async function fetchGitHubCommitDetail(
+  owner: string,
+  repo: string,
+  ref: string
+): Promise<{
+  affectedFiles: Array<{
+    path: string;
+    module: string;
+    changeType: string;
+    additions: number;
+    deletions: number;
+    owner: string;
+  }>;
+}> {
+  const detail = await githubFetch<GitHubCommitDetail>(`/repos/${owner}/${repo}/commits/${ref}`);
+  const affectedFiles = (detail.files ?? []).map((file) => ({
+    path: file.filename,
+    module: inferModuleFromPath(file.filename),
+    changeType: mapGitHubChangeType(file.status),
+    additions: file.additions,
+    deletions: file.deletions,
+    owner: "—",
+  }));
+
+  return { affectedFiles };
+}
+
+function inferModuleFromPath(path: string): string {
+  const segment = path.split("/").find(Boolean);
+  return segment ?? "root";
+}
+
+export type { GitHubCommit, GitHubCommitDetail, GitHubCommitFile, GitHubRepo };

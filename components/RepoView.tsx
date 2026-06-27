@@ -104,13 +104,18 @@ export function RepoView({ orgSlug, repoName }: { orgSlug: string; repoName: str
 
           <section className="panel">
             <div className="panel-header">
-              <h2>Commits</h2>
+              <div>
+                <h2>Changes</h2>
+                <p className="panel-header-desc muted">
+                  Agent-distilled summaries instead of raw diffs.
+                </p>
+              </div>
             </div>
             {loading ? (
               <p className="empty-state muted">Loading…</p>
             ) : (
               <>
-                <CommitMemoryList commits={visibleCommits} />
+                <CommitMemoryList commits={visibleCommits} org={orgSlug} repo={repoName} />
                 {!showAllCommits && hiddenCommitCount > 0 ? (
                   <div className="panel-footer">
                     <button

@@ -468,34 +468,34 @@ export function renderGraphHtml(graph: MemoryGraph, title = "Rein Memory Graph")
 
     nodes.forEach((n, i) => {
       const angle = (i / nodes.length) * 2 * Math.PI;
-      const r = 55 + Math.random() * 35;
+      const r = 78 + Math.random() * 48;
       n.x = width / 2 + r * Math.cos(angle);
       n.y = height / 2 + r * Math.sin(angle);
     });
 
     function collisionRadius(d) {
       const titleLen = Math.min(d.label?.length ?? 8, 28);
-      return 14 + titleLen * 1.35;
+      return 18 + titleLen * 1.55;
     }
 
     let sim = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(visibleLinks)
         .id((d) => d.id)
         .distance((d) => {
-          if (d.kind === "search") return 72;
-          if (d.kind === "temporal") return 48;
-          return 56 + (1 - d.weight) * 28;
+          if (d.kind === "search") return 88;
+          if (d.kind === "temporal") return 62;
+          return 72 + (1 - d.weight) * 36;
         })
         .strength((d) => {
-          if (d.kind === "search") return 0.62;
-          if (d.kind === "temporal") return 0.35;
-          return 0.35 + d.weight * 0.32;
+          if (d.kind === "search") return 0.52;
+          if (d.kind === "temporal") return 0.28;
+          return 0.28 + d.weight * 0.28;
         }))
-      .force("charge", d3.forceManyBody().strength(-115).distanceMax(300))
+      .force("charge", d3.forceManyBody().strength(-185).distanceMax(480))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("x", d3.forceX(width / 2).strength(0.035))
-      .force("y", d3.forceY(height / 2).strength(0.035))
-      .force("collision", d3.forceCollide().radius(collisionRadius).strength(0.92))
+      .force("x", d3.forceX(width / 2).strength(0.028))
+      .force("y", d3.forceY(height / 2).strength(0.028))
+      .force("collision", d3.forceCollide().radius(collisionRadius).strength(1))
       .alphaDecay(0.024)
       .velocityDecay(0.38)
       .on("tick", ticked);

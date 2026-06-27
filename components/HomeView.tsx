@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { AddRepositoryButton } from "@/components/AddRepositoryDialog";
 import { useWorkspace } from "@/components/WorkspaceProvider";
-import { LanguageDot } from "@/components/ui";
 import type { Commit, RepositorySummary, WorkspaceRepo } from "@/lib/types";
 import { orgPath, repoKey, repoPath } from "@/lib/types";
 import { listOrganizations } from "@/lib/workspace";
@@ -96,8 +95,6 @@ export function HomeView() {
   const [askQuery, setAskQuery] = useState("Which repositories need memory backfill?");
   const [answer, setAnswer] = useState("");
   const [scope, setScope] = useState<"visible" | "all">("all");
-  const [languageFilter, setLanguageFilter] = useState("All");
-  const [starred, setStarred] = useState<Set<string>>(new Set());
   const [repoData, setRepoData] = useState<Record<string, RepositoryData>>({});
   const organizations = listOrganizations(repos);
   const rows = useMemo<WorkspaceRow[]>(
@@ -106,18 +103,10 @@ export function HomeView() {
   );
   const visibleRows = rows.filter((row) => includesQuery(row, repoQuery));
   const topRepos = visibleRows.slice(0, 8);
-  const repoCount = visibleRows.length;
   const loadedRows = rows.filter((row) => row.data);
   const totalCommits = loadedRows.reduce((sum, row) => sum + (row.data?.commitCount ?? 0), 0);
   const totalMemory = loadedRows.reduce((sum, row) => sum + (row.data?.memoryCount ?? 0), 0);
-  const languages = ["All", ...Array.from(new Set(loadedRows.map((row) => row.data?.language).filter(Boolean)))];
-  const trendingRows = loadedRows
-    .filter((row) => languageFilter === "All" || row.data?.language === languageFilter)
-    .sort((a, b) => {
-      const aScore = (a.data?.memoryCount ?? 0) * 2 + (a.data?.commitCount ?? 0);
-      const bScore = (b.data?.memoryCount ?? 0) * 2 + (b.data?.commitCount ?? 0);
-      return bScore - aScore;
-    });
+  const languageCount = new Set(loadedRows.map((row) => row.data?.language).filter(Boolean)).size;
   const changelog = loadedRows
     .flatMap((row) =>
       (row.data?.commits ?? []).map((commit) => ({
@@ -225,18 +214,20 @@ export function HomeView() {
                 setAnswer(buildAgentAnswer(askQuery, scope === "all" ? rows : visibleRows));
               }}
             >
-              <label>
-                <span className="sr-only">Ask about workspace memory</span>
+              <label className="ask-input-label">
+                <span className="ask-input-heading">Ask about your workspace</span>
                 <input
                   type="text"
                   value={askQuery}
                   onChange={(event) => setAskQuery(event.target.value)}
-                  placeholder="Ask about coverage, releases, or backfill"
+                  placeholder="Coverage, releases, backfill gaps…"
                 />
               </label>
               {answer ? <p className="ask-answer">{answer}</p> : null}
               <div className="ask-controls">
-                <button type="submit" className="button-secondary">Ask</button>
+                <button type="submit" className="button-secondary">
+                  Ask
+                </button>
                 <button
                   type="button"
                   className="button-secondary"
@@ -250,105 +241,30 @@ export function HomeView() {
                 </button>
               </div>
             </form>
+
             <div className="workspace-kpis" aria-label="Workspace metrics">
-              <span><strong>{repos.length}</strong> repos</span>
-              <span><strong>{totalCommits}</strong> commits</span>
-              <span><strong>{totalMemory}</strong> memories</span>
-              <span><strong>{languages.length - 1}</strong> languages</span>
+              <div className="workspace-kpi-row">
+                <span className="workspace-kpi-label">Repositories</span>
+                <strong className="workspace-kpi-value">{repos.length}</strong>
+              </div>
+              <div className="workspace-kpi-row">
+                <span className="workspace-kpi-label">Commits</span>
+                <strong className="workspace-kpi-value">{totalCommits.toLocaleString()}</strong>
+              </div>
+              <div className="workspace-kpi-row">
+                <span className="workspace-kpi-label">Memories</span>
+                <strong className="workspace-kpi-value">{totalMemory.toLocaleString()}</strong>
+              </div>
+              <div className="workspace-kpi-row">
+                <span className="workspace-kpi-label">Languages</span>
+                <strong className="workspace-kpi-value">{languageCount}</strong>
+              </div>
             </div>
-            <div className="ask-controls">
+
+            <div className="ask-box-footer">
               <AddRepositoryButton label="Add repository" />
             </div>
           </div>
-        </section>
-
-        <section className="trending-section">
-          <div className="section-heading-row">
-            <div>
-              <h2>Trending repositories</h2>
-              <p className="muted">High-signal repos by activity and memory.</p>
-            </div>
-            <button
-              type="button"
-              className="button-secondary"
-              onClick={() => {
-                const current = languages.indexOf(languageFilter);
-                setLanguageFilter(languages[(current + 1) % languages.length] ?? "All");
-              }}
-            >
-              {languageFilter === "All" ? "Filter" : languageFilter}
-            </button>
-          </div>
-
-          <div className="trending-list">
-            {trendingRows.map((repo) => {
-              const key = repoKey(repo.org, repo.name);
-              const coverage = repo.data?.commitCount
-                ? Math.round(((repo.data?.memoryCount ?? 0) / repo.data.commitCount) * 100)
-                : 0;
-
-              return (
-              <article className="trending-card" key={key}>
-                <div>
-                  <h3>
-                    <Link href={repoPath(repo.org, repo.name)}>
-                      {repo.org}/{repo.name}
-                    </Link>
-                  </h3>
-                  <div className="repo-list-meta">
-                    <LanguageDot language={repo.data?.language ?? "—"} />
-                    <span className="muted">{repo.data?.commitCount ?? 0} commits</span>
-                    <span className="muted">{coverage}% memory</span>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  className={`button-secondary star-button${starred.has(key) ? " is-starred" : ""}`}
-                  aria-label={`Star ${repo.org}/${repo.name}`}
-                  aria-pressed={starred.has(key)}
-                  onClick={() =>
-                    setStarred((prev) => {
-                      const next = new Set(prev);
-                      if (next.has(key)) next.delete(key);
-                      else next.add(key);
-                      return next;
-                    })
-                  }
-                >
-                  {starred.has(key) ? "★" : "☆"}
-                </button>
-              </article>
-              );
-            })}
-          </div>
-        </section>
-
-        <section className="workspace-summary panel">
-          <div className="panel-header">
-            <h2>Your workspace</h2>
-            <span className="muted">{repoCount} repositories</span>
-          </div>
-          {repoCount > 0 ? (
-            <ul className="workspace-mini-list">
-              {visibleRows.slice(0, 5).map((repo) => (
-                <li key={`${repo.org}/${repo.name}`}>
-                  <Link href={repoPath(repo.org, repo.name)}>
-                    {repo.org}/<strong>{repo.name}</strong>
-                  </Link>
-                  <span className="muted">
-                    {repo.data
-                      ? `${repo.data.language} · ${repo.data.commitCount} commits · ${repo.data.memoryCount} memories`
-                      : "Loading metadata"}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="empty-panel">
-              <p>No repositories yet.</p>
-              <p className="muted">Paste a GitHub URL or owner/repo.</p>
-            </div>
-          )}
         </section>
       </main>
 
@@ -365,7 +281,9 @@ export function HomeView() {
           <ol>
             {changelog.map(({ repo, commit }) => (
               <li key={`${repo}/${commit.sha}`}>
-                <span className="muted">{repo} · {commit.relativeTime}</span>
+                <span className="muted">
+                  {repo} · {commit.relativeTime}
+                </span>
                 <strong>{commit.memory?.title ?? commit.message}</strong>
               </li>
             ))}
