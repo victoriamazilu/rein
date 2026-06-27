@@ -102,7 +102,7 @@ program
   .command("search")
   .description("Hybrid semantic + keyword search over agent_commits")
   .argument("<query...>", "Search query")
-  .option("-n, --count <count>", "Number of results", "10")
+  .option("-n, --count <count>", "Number of results", "3")
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (queryParts: string[], opts: { count: string; repo?: string }) => {
     const query = queryParts.join(" ");
