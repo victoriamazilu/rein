@@ -1,10 +1,10 @@
 {
-  "name": "AgentGit search value benchmark",
-  "description": "A small starter benchmark that checks whether AgentGit finds the commit memory a new teammate or future agent would need.",
+  "name": "rein search value benchmark",
+  "description": "A small starter benchmark that checks whether rein finds the commit memory a new teammate or future agent would need.",
   "k": 5,
   "queries": [
     {
-      "query": "What is this project and how does AgentGit remember code decisions?",
+      "query": "What is this project and how does rein remember code decisions?",
       "relevant": ["379a3d1", "a69f576", "556e9cb"],
       "why": "A beginner asks for the original product plan and purpose."
     },

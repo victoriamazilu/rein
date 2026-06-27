@@ -1,10 +1,13 @@
-# AgentGit Benchmark
+# rein Benchmarks
 
-This benchmark is meant to prove the project value in a simple way:
+The main benchmark is meant to prove the project value directly:
 
-> Can AgentGit find the useful project memory faster than normal Git commit messages?
+> Does rein help the same agent inspect fewer files, spend less discovery time, and pass hard performance checks?
 
-It asks real project-history questions, then checks whether the right commit appears near the top of the search results.
+It compares the same task twice:
+
+1. without rein: normal repo tools only
+2. with rein: the same tools, plus rein memory
 
 ## Run It
 
@@ -15,36 +18,37 @@ npm run benchmark
 The script prints a report and writes:
 
 ```txt
-benchmarks/latest-report.md
+benchmarks/context-effort-report.md
 ```
 
 ## What The Numbers Mean
 
-- **Right answer in top 1**: the best result was correct.
-- **Right answer in top 3**: the correct result was one of the first three.
-- **Right answer in top 5**: the correct result was somewhere in the first five.
-- **Mean reciprocal rank**: a score where higher is better because the right answer appears closer to the top.
-- **Average query time**: how long the search took.
+- **Files inspected**: unique files touched through search hits, reads, git history, diffs, test failures, or perf traces.
+- **Context discovery time**: estimated agent time spent finding the right context.
+- **Performance checks passed**: repeated samples are reduced to the median and compared with the task threshold.
 
 ## Why This Is Impressive
 
-The headline benchmark compares:
+The story is not "rein is a faster grep."
 
-1. **AgentGit**, which searches AI-written memory notes.
-2. **Plain Git**, using `git log --grep` over normal commit messages.
+The story is:
 
-The report also includes a stronger custom keyword check over commit messages. That extra column is there to keep the benchmark honest: sometimes commit messages alone are enough, and sometimes AgentGit's richer memory helps more.
+> rein helps people and agents avoid blind repo archaeology.
 
-If AgentGit wins, the takeaway is easy to explain:
+That is the hackathon proof: same agent, same task, less context digging, better performance-aware work.
 
-> AgentGit helps people and agents find the reason behind old code changes better than Git commit messages alone.
+## Search Benchmark
 
-## Add More Questions
+The old search benchmark still exists as a lower-level check:
 
-Edit:
-
-```txt
-benchmarks/agentgit-search.json
+```bash
+npm run benchmark:search
 ```
 
-Add beginner-style questions and the commit SHA prefixes that should answer them.
+It writes:
+
+```txt
+benchmarks/latest-report.md
+```
+
+Use it when you specifically want to compare semantic memory search against Git commit-message search.

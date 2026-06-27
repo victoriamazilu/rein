@@ -1,0 +1,2330 @@
+{
+  "name": "rein context-effort benchmark",
+  "description": "Twenty realistic software tasks scored by how much repo context the same agent inspects with and without rein memory.",
+  "model": {
+    "filesInspected": "Unique files mentioned by search hits, full reads, git history, diffs, test failures, or perf traces.",
+    "time": "Estimated agent context-discovery seconds from the replayed trajectory, not machine wall-clock.",
+    "hardPerformanceChecks": "Objective pass/fail grading from repeated samples against each task performance threshold; medians are reported,."
+  },
+  "tasks": [
+    {
+      "id": "auth-session-refresh",
+      "category": "bugfix",
+      "project": "SaaS dashboard",
+      "prompt": "Fix users being logged out after a token refresh race.",
+      "performanceTarget": "No extra auth round trip during normal page navigation.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 22,
+            "files": [
+              "src/auth/session.ts",
+              "src/auth/token.ts",
+              "src/middleware/auth.ts",
+              "src/api/me.ts",
+              "tests/auth/session.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 35,
+            "files": [
+              "src/auth/session.ts",
+              "src/auth/token.ts",
+              "src/middleware/auth.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 28,
+            "files": [
+              "src/auth/session.ts",
+              "src/api/me.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 45,
+            "files": [
+              "tests/auth/session.test.ts",
+              "tests/auth/token-refresh.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 40,
+            "files": [
+              "scripts/bench-auth-navigation.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            118,
+            116,
+            121,
+            114,
+            116
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/auth/session.ts",
+              "tests/auth/token-refresh.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 24,
+            "files": [
+              "src/auth/session.ts",
+              "src/auth/token.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/auth/token-refresh.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 35,
+            "files": [
+              "scripts/bench-auth-navigation.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            75,
+            74,
+            78,
+            76,
+            75
+          ]
+        }
+      },
+      "performance": {
+        "type": "runtime_latency",
+        "unit": "ms",
+        "direction": "lower",
+        "threshold": 80,
+        "baseline": 76,
+        "budget": "<= 80 ms"
+      }
+    },
+    {
+      "id": "checkout-price-rounding",
+      "category": "bugfix",
+      "project": "Commerce API",
+      "prompt": "Fix one-cent checkout total mismatches for discounted subscriptions.",
+      "performanceTarget": "Pricing calculation remains O(line items) and avoids duplicate tax calls.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 24,
+            "files": [
+              "src/pricing/calc.ts",
+              "src/pricing/discounts.ts",
+              "src/pricing/tax.ts",
+              "src/checkout/total.ts",
+              "src/billing/subscription.ts",
+              "tests/pricing/rounding.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 46,
+            "files": [
+              "src/pricing/calc.ts",
+              "src/pricing/discounts.ts",
+              "src/pricing/tax.ts",
+              "src/checkout/total.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 30,
+            "files": [
+              "src/pricing/calc.ts",
+              "src/billing/subscription.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 38,
+            "files": [
+              "tests/pricing/rounding.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 36,
+            "files": [
+              "scripts/bench-pricing.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            625,
+            640,
+            660,
+            635,
+            645
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 9,
+            "files": [
+              "src/pricing/calc.ts",
+              "tests/pricing/rounding.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 28,
+            "files": [
+              "src/pricing/calc.ts",
+              "src/pricing/discounts.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/pricing/rounding.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 34,
+            "files": [
+              "scripts/bench-pricing.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            870,
+            890,
+            910,
+            880,
+            895
+          ]
+        }
+      },
+      "performance": {
+        "type": "throughput",
+        "unit": "ops_s",
+        "direction": "higher",
+        "threshold": 900,
+        "baseline": 880,
+        "budget": ">= 900 ops_s"
+      }
+    },
+    {
+      "id": "feed-n-plus-one",
+      "category": "performance",
+      "project": "Social feed",
+      "prompt": "Reduce feed API latency caused by per-post author lookups.",
+      "performanceTarget": "p95 feed render under 120 ms for 100 posts.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 25,
+            "files": [
+              "src/feed/route.ts",
+              "src/feed/service.ts",
+              "src/users/repository.ts",
+              "src/posts/repository.ts",
+              "src/db/client.ts",
+              "tests/feed/feed.test.ts",
+              "scripts/bench-feed.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 55,
+            "files": [
+              "src/feed/route.ts",
+              "src/feed/service.ts",
+              "src/users/repository.ts",
+              "src/posts/repository.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 34,
+            "files": [
+              "src/feed/service.ts",
+              "src/users/repository.ts",
+              "src/db/client.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 42,
+            "files": [
+              "tests/feed/feed.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 48,
+            "files": [
+              "scripts/bench-feed.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            101,
+            101,
+            101,
+            101,
+            101
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 10,
+            "files": [
+              "src/feed/service.ts",
+              "src/users/repository.ts",
+              "scripts/bench-feed.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 35,
+            "files": [
+              "src/feed/service.ts",
+              "src/users/repository.ts",
+              "src/posts/repository.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 36,
+            "files": [
+              "tests/feed/feed.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 45,
+            "files": [
+              "scripts/bench-feed.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            2,
+            2,
+            2,
+            2,
+            2
+          ]
+        }
+      },
+      "performance": {
+        "type": "database_query_count",
+        "unit": "queries",
+        "direction": "lower",
+        "threshold": 3,
+        "baseline": 2,
+        "budget": "<= 3 queries"
+      }
+    },
+    {
+      "id": "migration-null-backfill",
+      "category": "database",
+      "project": "Analytics warehouse",
+      "prompt": "Add a non-null account_id to events without breaking old imports.",
+      "performanceTarget": "Backfill processes 50k rows without table-wide locks.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 30,
+            "files": [
+              "db/migrations/014_events.sql",
+              "db/migrations/019_accounts.sql",
+              "src/import/events.ts",
+              "src/events/repository.ts",
+              "tests/import/events.test.ts",
+              "scripts/bench-backfill.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 50,
+            "files": [
+              "db/migrations/014_events.sql",
+              "db/migrations/019_accounts.sql",
+              "src/import/events.ts",
+              "src/events/repository.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 38,
+            "files": [
+              "db/migrations/014_events.sql",
+              "src/import/events.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 48,
+            "files": [
+              "tests/import/events.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 58,
+            "files": [
+              "scripts/bench-backfill.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            3850,
+            3920,
+            4010,
+            3900,
+            3880
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 11,
+            "files": [
+              "db/migrations/014_events.sql",
+              "src/import/events.ts",
+              "scripts/bench-backfill.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 34,
+            "files": [
+              "db/migrations/014_events.sql",
+              "src/import/events.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 44,
+            "files": [
+              "tests/import/events.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 52,
+            "files": [
+              "scripts/bench-backfill.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            5100,
+            5220,
+            5300,
+            5190,
+            5240
+          ]
+        }
+      },
+      "performance": {
+        "type": "throughput",
+        "unit": "rows_s",
+        "direction": "higher",
+        "threshold": 5000,
+        "baseline": 5200,
+        "budget": ">= 5000 rows_s"
+      }
+    },
+    {
+      "id": "image-upload-memory",
+      "category": "performance",
+      "project": "Media uploader",
+      "prompt": "Stop large image uploads from spiking memory.",
+      "performanceTarget": "Peak RSS stays under 256 MB for a 20 MB upload.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 26,
+            "files": [
+              "src/upload/handler.ts",
+              "src/upload/storage.ts",
+              "src/images/resize.ts",
+              "src/images/metadata.ts",
+              "tests/upload/large-file.test.ts",
+              "scripts/bench-upload.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 48,
+            "files": [
+              "src/upload/handler.ts",
+              "src/upload/storage.ts",
+              "src/images/resize.ts",
+              "src/images/metadata.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 32,
+            "files": [
+              "src/images/resize.ts",
+              "src/upload/handler.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 44,
+            "files": [
+              "tests/upload/large-file.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 50,
+            "files": [
+              "scripts/bench-upload.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            398,
+            410,
+            421,
+            405,
+            414
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/upload/handler.ts",
+              "src/images/resize.ts",
+              "scripts/bench-upload.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 32,
+            "files": [
+              "src/upload/handler.ts",
+              "src/images/resize.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/upload/large-file.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 46,
+            "files": [
+              "scripts/bench-upload.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            216,
+            220,
+            224,
+            218,
+            222
+          ]
+        }
+      },
+      "performance": {
+        "type": "memory_usage",
+        "unit": "mb_rss",
+        "direction": "lower",
+        "threshold": 256,
+        "baseline": 220,
+        "budget": "<= 256 mb_rss"
+      }
+    },
+    {
+      "id": "mobile-nav-hydration",
+      "category": "frontend",
+      "project": "Marketing site",
+      "prompt": "Fix mobile navigation closing during hydration.",
+      "performanceTarget": "No added client bundle over 2 KB gzip.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 20,
+            "files": [
+              "app/layout.tsx",
+              "components/Nav.tsx",
+              "components/MobileMenu.tsx",
+              "components/Header.tsx",
+              "styles/nav.css",
+              "tests/nav/mobile.test.ts",
+              "scripts/bench-bundle.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 42,
+            "files": [
+              "components/Nav.tsx",
+              "components/MobileMenu.tsx",
+              "components/Header.tsx",
+              "styles/nav.css"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 25,
+            "files": [
+              "components/MobileMenu.tsx",
+              "app/layout.tsx"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 35,
+            "files": [
+              "tests/nav/mobile.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 32,
+            "files": [
+              "scripts/bench-bundle.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            5.2,
+            5.5,
+            5.4,
+            5.3,
+            5.6
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 7,
+            "files": [
+              "components/MobileMenu.tsx",
+              "tests/nav/mobile.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 24,
+            "files": [
+              "components/MobileMenu.tsx",
+              "styles/nav.css"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 32,
+            "files": [
+              "tests/nav/mobile.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 28,
+            "files": [
+              "scripts/bench-bundle.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            0.7,
+            0.8,
+            0.9,
+            0.8,
+            0.8
+          ]
+        }
+      },
+      "performance": {
+        "type": "bundle_size",
+        "unit": "kb_gzip_delta",
+        "direction": "lower",
+        "threshold": 2,
+        "baseline": 0.8,
+        "budget": "<= 2 kb_gzip_delta"
+      }
+    },
+    {
+      "id": "search-ranking-regression",
+      "category": "search",
+      "project": "Docs portal",
+      "prompt": "Fix exact title matches being ranked below body-only matches.",
+      "performanceTarget": "Search p95 stays under 80 ms for 10k docs.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 24,
+            "files": [
+              "src/search/query.ts",
+              "src/search/rank.ts",
+              "src/search/indexer.ts",
+              "src/search/tokenize.ts",
+              "tests/search/rank.test.ts",
+              "scripts/bench-search.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 44,
+            "files": [
+              "src/search/query.ts",
+              "src/search/rank.ts",
+              "src/search/indexer.ts",
+              "src/search/tokenize.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 30,
+            "files": [
+              "src/search/rank.ts",
+              "src/search/indexer.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 36,
+            "files": [
+              "tests/search/rank.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 42,
+            "files": [
+              "scripts/bench-search.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            116,
+            119,
+            121,
+            117,
+            118
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/search/rank.ts",
+              "tests/search/rank.test.ts",
+              "scripts/bench-search.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 28,
+            "files": [
+              "src/search/rank.ts",
+              "src/search/tokenize.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 32,
+            "files": [
+              "tests/search/rank.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 38,
+            "files": [
+              "scripts/bench-search.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            72,
+            74,
+            75,
+            73,
+            74
+          ]
+        }
+      },
+      "performance": {
+        "type": "runtime_latency",
+        "unit": "ms",
+        "direction": "lower",
+        "threshold": 80,
+        "baseline": 74,
+        "budget": "<= 80 ms"
+      }
+    },
+    {
+      "id": "queue-dedupe",
+      "category": "backend",
+      "project": "Notification worker",
+      "prompt": "Prevent duplicate emails when a retry races with a scheduled job.",
+      "performanceTarget": "Worker throughput stays above 1k jobs/min.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 28,
+            "files": [
+              "src/jobs/queue.ts",
+              "src/jobs/retry.ts",
+              "src/jobs/scheduler.ts",
+              "src/email/send.ts",
+              "src/db/locks.ts",
+              "tests/jobs/dedupe.test.ts",
+              "scripts/bench-worker.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 52,
+            "files": [
+              "src/jobs/queue.ts",
+              "src/jobs/retry.ts",
+              "src/jobs/scheduler.ts",
+              "src/email/send.ts",
+              "src/db/locks.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 30,
+            "files": [
+              "src/jobs/retry.ts",
+              "src/jobs/scheduler.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 42,
+            "files": [
+              "tests/jobs/dedupe.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 45,
+            "files": [
+              "scripts/bench-worker.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            760,
+            780,
+            790,
+            785,
+            775
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 9,
+            "files": [
+              "src/jobs/queue.ts",
+              "src/db/locks.ts",
+              "tests/jobs/dedupe.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 32,
+            "files": [
+              "src/jobs/queue.ts",
+              "src/db/locks.ts",
+              "src/jobs/retry.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 36,
+            "files": [
+              "tests/jobs/dedupe.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 40,
+            "files": [
+              "scripts/bench-worker.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            1060,
+            1080,
+            1095,
+            1075,
+            1085
+          ]
+        }
+      },
+      "performance": {
+        "type": "throughput",
+        "unit": "jobs_min",
+        "direction": "higher",
+        "threshold": 1000,
+        "baseline": 1080,
+        "budget": ">= 1000 jobs_min"
+      }
+    },
+    {
+      "id": "csv-import-parser",
+      "category": "data",
+      "project": "CRM import",
+      "prompt": "Handle quoted newlines in uploaded CSV imports.",
+      "performanceTarget": "Import 100k rows without loading the whole file in memory.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 24,
+            "files": [
+              "src/import/csv.ts",
+              "src/import/stream.ts",
+              "src/import/mapper.ts",
+              "src/api/import.ts",
+              "tests/import/csv.test.ts",
+              "scripts/bench-import.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 48,
+            "files": [
+              "src/import/csv.ts",
+              "src/import/stream.ts",
+              "src/import/mapper.ts",
+              "src/api/import.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 32,
+            "files": [
+              "src/import/csv.ts",
+              "src/import/stream.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 38,
+            "files": [
+              "tests/import/csv.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 50,
+            "files": [
+              "scripts/bench-import.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            600,
+            622,
+            618,
+            640,
+            620
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/import/stream.ts",
+              "tests/import/csv.test.ts",
+              "scripts/bench-import.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 30,
+            "files": [
+              "src/import/stream.ts",
+              "src/import/mapper.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/import/csv.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 46,
+            "files": [
+              "scripts/bench-import.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            184,
+            188,
+            192,
+            186,
+            190
+          ]
+        }
+      },
+      "performance": {
+        "type": "memory_usage",
+        "unit": "mb_rss",
+        "direction": "lower",
+        "threshold": 256,
+        "baseline": 188,
+        "budget": "<= 256 mb_rss"
+      }
+    },
+    {
+      "id": "rate-limit-ipv6",
+      "category": "security",
+      "project": "Public API",
+      "prompt": "Fix rate limiting bypass for rotated IPv6 addresses.",
+      "performanceTarget": "Limiter check stays below 1 ms per request.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 26,
+            "files": [
+              "src/rate-limit/key.ts",
+              "src/rate-limit/store.ts",
+              "src/middleware/client-ip.ts",
+              "src/api/router.ts",
+              "tests/rate-limit/ipv6.test.ts",
+              "scripts/bench-rate-limit.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 46,
+            "files": [
+              "src/rate-limit/key.ts",
+              "src/rate-limit/store.ts",
+              "src/middleware/client-ip.ts",
+              "src/api/router.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 30,
+            "files": [
+              "src/rate-limit/key.ts",
+              "src/middleware/client-ip.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/rate-limit/ipv6.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 34,
+            "files": [
+              "scripts/bench-rate-limit.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            1.6,
+            1.7,
+            1.8,
+            1.7,
+            1.65
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/rate-limit/key.ts",
+              "tests/rate-limit/ipv6.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 28,
+            "files": [
+              "src/rate-limit/key.ts",
+              "src/middleware/client-ip.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 36,
+            "files": [
+              "tests/rate-limit/ipv6.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 30,
+            "files": [
+              "scripts/bench-rate-limit.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            0.7,
+            0.72,
+            0.74,
+            0.71,
+            0.73
+          ]
+        }
+      },
+      "performance": {
+        "type": "runtime_latency",
+        "unit": "ms",
+        "direction": "lower",
+        "threshold": 1,
+        "baseline": 0.72,
+        "budget": "<= 1 ms"
+      }
+    },
+    {
+      "id": "cache-invalidation",
+      "category": "backend",
+      "project": "CMS",
+      "prompt": "Invalidate article cache when authors change display names.",
+      "performanceTarget": "No full-site cache clear for a single author update.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 22,
+            "files": [
+              "src/cache/articles.ts",
+              "src/cache/tags.ts",
+              "src/authors/service.ts",
+              "src/articles/render.ts",
+              "tests/cache/author-name.test.ts",
+              "scripts/bench-cache.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 44,
+            "files": [
+              "src/cache/articles.ts",
+              "src/cache/tags.ts",
+              "src/authors/service.ts",
+              "src/articles/render.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 28,
+            "files": [
+              "src/cache/tags.ts",
+              "src/authors/service.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/cache/author-name.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 36,
+            "files": [
+              "scripts/bench-cache.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            13.5,
+            14.2,
+            13.8,
+            14,
+            14.4
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 7,
+            "files": [
+              "src/cache/tags.ts",
+              "src/authors/service.ts",
+              "tests/cache/author-name.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 28,
+            "files": [
+              "src/cache/tags.ts",
+              "src/authors/service.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 30,
+            "files": [
+              "tests/cache/author-name.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 32,
+            "files": [
+              "scripts/bench-cache.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            1.6,
+            1.8,
+            1.9,
+            1.7,
+            1.8
+          ]
+        }
+      },
+      "performance": {
+        "type": "regression_budget",
+        "unit": "percent",
+        "direction": "lower",
+        "threshold": 5,
+        "baseline": 1.8,
+        "budget": "<= 5 percent"
+      }
+    },
+    {
+      "id": "feature-flag-defaults",
+      "category": "release",
+      "project": "Feature platform",
+      "prompt": "Make beta flags default off in production but on in preview.",
+      "performanceTarget": "Flag lookup remains single read per request.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 18,
+            "files": [
+              "src/flags/defaults.ts",
+              "src/flags/provider.ts",
+              "src/env/runtime.ts",
+              "src/app/bootstrap.ts",
+              "tests/flags/defaults.test.ts",
+              "scripts/bench-flags.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 36,
+            "files": [
+              "src/flags/defaults.ts",
+              "src/flags/provider.ts",
+              "src/env/runtime.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 24,
+            "files": [
+              "src/flags/defaults.ts",
+              "src/env/runtime.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 30,
+            "files": [
+              "tests/flags/defaults.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 24,
+            "files": [
+              "scripts/bench-flags.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            3.7,
+            3.8,
+            3.9,
+            3.8,
+            3.75
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 6,
+            "files": [
+              "src/flags/defaults.ts",
+              "src/env/runtime.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 22,
+            "files": [
+              "src/flags/defaults.ts",
+              "src/env/runtime.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 28,
+            "files": [
+              "tests/flags/defaults.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 22,
+            "files": [
+              "scripts/bench-flags.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            1.1,
+            1.2,
+            1.3,
+            1.2,
+            1.2
+          ]
+        }
+      },
+      "performance": {
+        "type": "runtime_latency",
+        "unit": "ms",
+        "direction": "lower",
+        "threshold": 2,
+        "baseline": 1.2,
+        "budget": "<= 2 ms"
+      }
+    },
+    {
+      "id": "webhook-idempotency",
+      "category": "integration",
+      "project": "Billing integration",
+      "prompt": "Make payment webhooks idempotent across provider retries.",
+      "performanceTarget": "Webhook handler remains below 50 ms on duplicate events.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 28,
+            "files": [
+              "src/webhooks/payment.ts",
+              "src/billing/events.ts",
+              "src/billing/invoices.ts",
+              "src/db/idempotency.ts",
+              "tests/webhooks/payment.test.ts",
+              "scripts/bench-webhook.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 50,
+            "files": [
+              "src/webhooks/payment.ts",
+              "src/billing/events.ts",
+              "src/billing/invoices.ts",
+              "src/db/idempotency.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 34,
+            "files": [
+              "src/webhooks/payment.ts",
+              "src/db/idempotency.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/webhooks/payment.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 42,
+            "files": [
+              "scripts/bench-webhook.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            84,
+            86,
+            88,
+            85,
+            87
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 9,
+            "files": [
+              "src/webhooks/payment.ts",
+              "src/db/idempotency.ts",
+              "tests/webhooks/payment.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 30,
+            "files": [
+              "src/webhooks/payment.ts",
+              "src/db/idempotency.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 36,
+            "files": [
+              "tests/webhooks/payment.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 38,
+            "files": [
+              "scripts/bench-webhook.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            33,
+            34,
+            35,
+            34,
+            34
+          ]
+        }
+      },
+      "performance": {
+        "type": "runtime_latency",
+        "unit": "ms",
+        "direction": "lower",
+        "threshold": 50,
+        "baseline": 34,
+        "budget": "<= 50 ms"
+      }
+    },
+    {
+      "id": "accessibility-modal-focus",
+      "category": "frontend",
+      "project": "Admin UI",
+      "prompt": "Fix modal focus escaping behind the overlay.",
+      "performanceTarget": "No extra render loop or global document scan on each keypress.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 20,
+            "files": [
+              "components/Modal.tsx",
+              "components/Dialog.tsx",
+              "components/FocusTrap.tsx",
+              "components/Portal.tsx",
+              "tests/a11y/modal.test.ts",
+              "scripts/bench-keydown.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 38,
+            "files": [
+              "components/Modal.tsx",
+              "components/Dialog.tsx",
+              "components/FocusTrap.tsx",
+              "components/Portal.tsx"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 26,
+            "files": [
+              "components/FocusTrap.tsx",
+              "components/Dialog.tsx"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/a11y/modal.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 28,
+            "files": [
+              "scripts/bench-keydown.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            7.3,
+            7.4,
+            7.6,
+            7.5,
+            7.4
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 7,
+            "files": [
+              "components/FocusTrap.tsx",
+              "tests/a11y/modal.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 24,
+            "files": [
+              "components/FocusTrap.tsx",
+              "components/Dialog.tsx"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 30,
+            "files": [
+              "tests/a11y/modal.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 24,
+            "files": [
+              "scripts/bench-keydown.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            3,
+            3.1,
+            3.2,
+            3.1,
+            3.1
+          ]
+        }
+      },
+      "performance": {
+        "type": "test_runtime",
+        "unit": "s",
+        "direction": "lower",
+        "threshold": 5,
+        "baseline": 3.1,
+        "budget": "<= 5 s"
+      }
+    },
+    {
+      "id": "api-pagination-cursor",
+      "category": "api",
+      "project": "Customer API",
+      "prompt": "Fix duplicate rows across cursor-paginated pages.",
+      "performanceTarget": "Pagination remains index-backed for 1M rows.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 24,
+            "files": [
+              "src/api/customers.ts",
+              "src/customers/repository.ts",
+              "src/pagination/cursor.ts",
+              "src/db/indexes.sql",
+              "tests/api/pagination.test.ts",
+              "scripts/bench-pagination.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 44,
+            "files": [
+              "src/api/customers.ts",
+              "src/customers/repository.ts",
+              "src/pagination/cursor.ts",
+              "src/db/indexes.sql"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 30,
+            "files": [
+              "src/pagination/cursor.ts",
+              "src/customers/repository.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 38,
+            "files": [
+              "tests/api/pagination.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 46,
+            "files": [
+              "scripts/bench-pagination.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            95,
+            98,
+            97,
+            99,
+            96
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/pagination/cursor.ts",
+              "src/db/indexes.sql",
+              "scripts/bench-pagination.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 30,
+            "files": [
+              "src/pagination/cursor.ts",
+              "src/customers/repository.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/api/pagination.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 42,
+            "files": [
+              "scripts/bench-pagination.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            9.6,
+            9.8,
+            10.1,
+            9.7,
+            9.9
+          ]
+        }
+      },
+      "performance": {
+        "type": "algorithmic_scaling",
+        "unit": "ratio",
+        "direction": "lower",
+        "threshold": 12,
+        "baseline": 9.8,
+        "budget": "<= 12 ratio"
+      }
+    },
+    {
+      "id": "offline-sync-conflict",
+      "category": "mobile",
+      "project": "Offline notes app",
+      "prompt": "Resolve offline edits without overwriting newer server content.",
+      "performanceTarget": "Sync of 1k notes stays linear.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 28,
+            "files": [
+              "src/sync/client.ts",
+              "src/sync/merge.ts",
+              "src/sync/server.ts",
+              "src/storage/local.ts",
+              "tests/sync/conflict.test.ts",
+              "scripts/bench-sync.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 52,
+            "files": [
+              "src/sync/client.ts",
+              "src/sync/merge.ts",
+              "src/sync/server.ts",
+              "src/storage/local.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 34,
+            "files": [
+              "src/sync/merge.ts",
+              "src/storage/local.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 44,
+            "files": [
+              "tests/sync/conflict.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 48,
+            "files": [
+              "scripts/bench-sync.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            47,
+            49,
+            48,
+            50,
+            48
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 9,
+            "files": [
+              "src/sync/merge.ts",
+              "tests/sync/conflict.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 32,
+            "files": [
+              "src/sync/merge.ts",
+              "src/sync/client.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/sync/conflict.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 44,
+            "files": [
+              "scripts/bench-sync.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            10.2,
+            10.4,
+            10.5,
+            10.3,
+            10.4
+          ]
+        }
+      },
+      "performance": {
+        "type": "algorithmic_scaling",
+        "unit": "ratio",
+        "direction": "lower",
+        "threshold": 12,
+        "baseline": 10.4,
+        "budget": "<= 12 ratio"
+      }
+    },
+    {
+      "id": "logging-pii-redaction",
+      "category": "security",
+      "project": "Observability pipeline",
+      "prompt": "Prevent email addresses from leaking into structured logs.",
+      "performanceTarget": "Redaction stays under 5 percent logging overhead.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 22,
+            "files": [
+              "src/logging/logger.ts",
+              "src/logging/redact.ts",
+              "src/users/serializer.ts",
+              "src/api/errors.ts",
+              "tests/logging/redact.test.ts",
+              "scripts/bench-logging.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 42,
+            "files": [
+              "src/logging/logger.ts",
+              "src/logging/redact.ts",
+              "src/users/serializer.ts",
+              "src/api/errors.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 26,
+            "files": [
+              "src/logging/redact.ts",
+              "src/api/errors.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 34,
+            "files": [
+              "tests/logging/redact.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 30,
+            "files": [
+              "scripts/bench-logging.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            8.5,
+            8.8,
+            8.7,
+            8.9,
+            8.6
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 7,
+            "files": [
+              "src/logging/redact.ts",
+              "tests/logging/redact.test.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 24,
+            "files": [
+              "src/logging/redact.ts",
+              "src/logging/logger.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 30,
+            "files": [
+              "tests/logging/redact.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 26,
+            "files": [
+              "scripts/bench-logging.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            2.3,
+            2.4,
+            2.5,
+            2.4,
+            2.4
+          ]
+        }
+      },
+      "performance": {
+        "type": "regression_budget",
+        "unit": "percent",
+        "direction": "lower",
+        "threshold": 5,
+        "baseline": 2.4,
+        "budget": "<= 5 percent"
+      }
+    },
+    {
+      "id": "theme-token-refactor",
+      "category": "refactor",
+      "project": "Design system",
+      "prompt": "Rename spacing tokens without breaking consumers.",
+      "performanceTarget": "Build time and generated CSS size do not increase.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 20,
+            "files": [
+              "src/tokens/spacing.ts",
+              "src/tokens/build.ts",
+              "packages/react/Button.tsx",
+              "packages/react/Card.tsx",
+              "tests/tokens/spacing.test.ts",
+              "scripts/bench-css-size.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 40,
+            "files": [
+              "src/tokens/spacing.ts",
+              "src/tokens/build.ts",
+              "packages/react/Button.tsx",
+              "packages/react/Card.tsx"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 24,
+            "files": [
+              "src/tokens/spacing.ts",
+              "src/tokens/build.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 32,
+            "files": [
+              "tests/tokens/spacing.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 28,
+            "files": [
+              "scripts/bench-css-size.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            4.1,
+            4.2,
+            4.3,
+            4.2,
+            4.2
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 6,
+            "files": [
+              "src/tokens/spacing.ts",
+              "src/tokens/build.ts"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 24,
+            "files": [
+              "src/tokens/spacing.ts",
+              "src/tokens/build.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 28,
+            "files": [
+              "tests/tokens/spacing.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 24,
+            "files": [
+              "scripts/bench-css-size.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            0,
+            0,
+            0,
+            0,
+            0
+          ]
+        }
+      },
+      "performance": {
+        "type": "bundle_size",
+        "unit": "kb_gzip_delta",
+        "direction": "lower",
+        "threshold": 0,
+        "baseline": 0,
+        "budget": "<= 0 kb_gzip_delta"
+      }
+    },
+    {
+      "id": "background-export-timeout",
+      "category": "backend",
+      "project": "Reporting tool",
+      "prompt": "Stop large CSV exports from timing out HTTP requests.",
+      "performanceTarget": "Export 100k rows asynchronously under the queue SLA.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 30,
+            "files": [
+              "src/reports/export.ts",
+              "src/reports/query.ts",
+              "src/jobs/export-job.ts",
+              "src/api/reports.ts",
+              "src/storage/files.ts",
+              "tests/reports/export.test.ts",
+              "scripts/bench-export.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 58,
+            "files": [
+              "src/reports/export.ts",
+              "src/reports/query.ts",
+              "src/jobs/export-job.ts",
+              "src/api/reports.ts",
+              "src/storage/files.ts"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 36,
+            "files": [
+              "src/reports/export.ts",
+              "src/jobs/export-job.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 44,
+            "files": [
+              "tests/reports/export.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 52,
+            "files": [
+              "scripts/bench-export.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            4100,
+            4200,
+            4350,
+            4250,
+            4180
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 10,
+            "files": [
+              "src/jobs/export-job.ts",
+              "src/reports/query.ts",
+              "scripts/bench-export.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 34,
+            "files": [
+              "src/jobs/export-job.ts",
+              "src/reports/query.ts",
+              "src/storage/files.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 40,
+            "files": [
+              "tests/reports/export.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 48,
+            "files": [
+              "scripts/bench-export.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            9000,
+            9200,
+            9300,
+            9150,
+            9250
+          ]
+        }
+      },
+      "performance": {
+        "type": "throughput",
+        "unit": "rows_s",
+        "direction": "higher",
+        "threshold": 8000,
+        "baseline": 9200,
+        "budget": ">= 8000 rows_s"
+      }
+    },
+    {
+      "id": "realtime-presence-leak",
+      "category": "realtime",
+      "project": "Collaboration app",
+      "prompt": "Fix presence subscriptions leaking after tab close.",
+      "performanceTarget": "Memory returns to baseline after 500 join/leave cycles.",
+      "withoutRein": {
+        "events": [
+          {
+            "kind": "search",
+            "seconds": 28,
+            "files": [
+              "src/realtime/presence.ts",
+              "src/realtime/socket.ts",
+              "src/hooks/usePresence.ts",
+              "src/pages/room.tsx",
+              "tests/realtime/presence.test.ts",
+              "scripts/bench-presence.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 50,
+            "files": [
+              "src/realtime/presence.ts",
+              "src/realtime/socket.ts",
+              "src/hooks/usePresence.ts",
+              "src/pages/room.tsx"
+            ]
+          },
+          {
+            "kind": "git",
+            "seconds": 32,
+            "files": [
+              "src/realtime/presence.ts",
+              "src/hooks/usePresence.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 42,
+            "files": [
+              "tests/realtime/presence.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 50,
+            "files": [
+              "scripts/bench-presence.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            92,
+            96,
+            101,
+            98,
+            95
+          ]
+        }
+      },
+      "withRein": {
+        "events": [
+          {
+            "kind": "rein",
+            "seconds": 8,
+            "files": [
+              "src/hooks/usePresence.ts",
+              "src/realtime/socket.ts",
+              "scripts/bench-presence.mjs"
+            ]
+          },
+          {
+            "kind": "read",
+            "seconds": 30,
+            "files": [
+              "src/hooks/usePresence.ts",
+              "src/realtime/socket.ts"
+            ]
+          },
+          {
+            "kind": "test",
+            "seconds": 38,
+            "files": [
+              "tests/realtime/presence.test.ts"
+            ]
+          },
+          {
+            "kind": "perf",
+            "seconds": 46,
+            "files": [
+              "scripts/bench-presence.mjs"
+            ]
+          }
+        ],
+        "perf": {
+          "samples": [
+            7,
+            8,
+            9,
+            8,
+            8
+          ]
+        }
+      },
+      "performance": {
+        "type": "memory_usage",
+        "unit": "mb_rss_delta",
+        "direction": "lower",
+        "threshold": 20,
+        "baseline": 8,
+        "budget": "<= 20 mb_rss_delta"
+      }
+    }
+  ]
+}
