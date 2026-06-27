@@ -4,3 +4,4 @@ dist/
 .env
 buzz.txt
 .agentgit/
+*.swp

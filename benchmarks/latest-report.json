@@ -1,0 +1,754 @@
+{
+  "repo": "victoriamazilu/rein",
+  "k": 5,
+  "summary": {
+    "queryCount": 11,
+    "systems": {
+      "agentgit": {
+        "precisionAt1": 0.7272727272727273,
+        "precisionAt3": 0.33333333333333337,
+        "top1": 0.7272727272727273,
+        "top3": 0.9090909090909091,
+        "topK": 1,
+        "mrr": 0.8212121212121212,
+        "ndcgAtK": 0.7447228751351364,
+        "averageWinningRank": 1.6363636363636365,
+        "averageMs": 665.9976703636362
+      },
+      "gitGrep": {
+        "precisionAt1": 0,
+        "precisionAt3": 0,
+        "top1": 0,
+        "top3": 0,
+        "topK": 0,
+        "mrr": 0,
+        "ndcgAtK": 0,
+        "averageWinningRank": null,
+        "averageMs": 33.10786754545434
+      },
+      "gitKeyword": {
+        "precisionAt1": 0.2727272727272727,
+        "precisionAt3": 0.2121212121212121,
+        "top1": 0.2727272727272727,
+        "top3": 0.6363636363636364,
+        "topK": 0.7272727272727273,
+        "mrr": 0.4772727272727273,
+        "ndcgAtK": 0.4253848799803405,
+        "averageWinningRank": 1.875,
+        "averageMs": 0.24501909090907825
+      }
+    },
+    "liftVsPlainGit": {
+      "top1": 0.7272727272727273,
+      "top3": 0.9090909090909091,
+      "topK": 1,
+      "mrr": 0.8212121212121212,
+      "wins": 11,
+      "ties": 0
+    },
+    "liftVsKeyword": {
+      "top1": 0.4545454545454546,
+      "top3": 0.2727272727272727,
+      "topK": 0.2727272727272727,
+      "mrr": 0.3439393939393939,
+      "wins": 6,
+      "ties": 4
+    }
+  },
+  "rows": [
+    {
+      "query": "What is this project and how does AgentGit remember code decisions?",
+      "why": "A beginner asks for the original product plan and purpose.",
+      "relevant": [
+        "379a3d1",
+        "a69f576",
+        "556e9cb"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.453048647305221
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.444959228962442
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.43720263755831
+        },
+        {
+          "sha": "556e9cb0ec74a09e1ca07076b3240ba652430255",
+          "title": "Establish a foundational plan for developing the AgentGit CLI, focusing on integrating semantic memory into git workflows.",
+          "score": 0.431962165585202
+        },
+        {
+          "sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
+          "title": "Establish a foundational structure for the agent commit system, integrating GitHub commit tracking with a local database.",
+          "score": 0.376790312042243
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "1dd7f00fc86020e39e25aea6658552aa60a96d6a",
+          "title": "Add benchmark for AgentGit search value",
+          "score": 0.2
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "add agentgit agent instructions",
+          "score": 0.2
+        },
+        {
+          "sha": "5c499d4dbe86347ac3d9f58d8a321b6d0d1789e5",
+          "title": "Update .gitignore to include .agentgit directory",
+          "score": 0.2
+        },
+        {
+          "sha": "eed87fd85fd05feccc2e0fc6c57ea9b70a84c121",
+          "title": "improve agentgit show command",
+          "score": 0.2
+        },
+        {
+          "sha": "1f2a3561d6748d01ae88a79a294a59fc0338fdaf",
+          "title": "harden agentgit commit flow",
+          "score": 0.2
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": null,
+      "agentGitMs": 1912.279333,
+      "gitGrepMs": 31.232749999999896,
+      "gitKeywordMs": 0.7214579999999842
+    },
+    {
+      "query": "How is hybrid vector and keyword search implemented?",
+      "why": "A developer needs the commit that introduced search ranking.",
+      "relevant": [
+        "d079e1a",
+        "4336fae"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "d079e1af3efecc868cdcc127e7f8b210eb21d1f4",
+          "title": "To enhance the agent commit search by integrating both vector similarity and keyword ranking for improved result accuracy.",
+          "score": 0.44407250336049
+        },
+        {
+          "sha": "556e9cb0ec74a09e1ca07076b3240ba652430255",
+          "title": "Establish a foundational plan for developing the AgentGit CLI, focusing on integrating semantic memory into git workflows.",
+          "score": 0.231441471787263
+        },
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "score": 0.181237736943
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.137341634494946
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.135820722758784
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "d079e1af3efecc868cdcc127e7f8b210eb21d1f4",
+          "title": "implement hybrid agent commit search",
+          "score": 0.4
+        },
+        {
+          "sha": "1dd7f00fc86020e39e25aea6658552aa60a96d6a",
+          "title": "Add benchmark for AgentGit search value",
+          "score": 0.2
+        },
+        {
+          "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
+          "title": "Enhance search functionality and add memory graph generation",
+          "score": 0.2
+        },
+        {
+          "sha": "eedd51f95977806f4a626e5b67b58bb5bc49113d",
+          "title": "Add search tips documentation",
+          "score": 0.2
+        },
+        {
+          "sha": "b8c0aebb3d37748050e10335a825aef3d1eef122",
+          "title": "Add constants for default search count and embedding dimensions",
+          "score": 0.2
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 1,
+      "agentGitMs": 2040.7552920000003,
+      "gitGrepMs": 33.086583999999675,
+      "gitKeywordMs": 0.1946670000006634
+    },
+    {
+      "query": "How do I show stored memory for HEAD or a short SHA?",
+      "why": "A user wants the command behavior for showing AgentCommit metadata.",
+      "relevant": [
+        "eed87fd"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "eed87fd85fd05feccc2e0fc6c57ea9b70a84c121",
+          "title": "Enhance the agentgit CLI to allow for more flexible input when showing commit metadata.",
+          "score": 0.244699833451261
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
+          "score": 0.217828910244802
+        },
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "score": 0.212021927950383
+        },
+        {
+          "sha": "28f9e8cb9b08fc765bf719bea4b07a0588edcff5",
+          "title": "Enhance the user experience and functionality for managing repositories and their associated memory.",
+          "score": 0.207655799651107
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.199921107760427
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
+          "title": "Enhance search functionality and add memory graph generation",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "eed87fd85fd05feccc2e0fc6c57ea9b70a84c121",
+          "title": "improve agentgit show command",
+          "score": 0.16666666666666666
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 2,
+      "agentGitMs": 287.3267910000004,
+      "gitGrepMs": 32.40362499999992,
+      "gitKeywordMs": 0.23612500000035652
+    },
+    {
+      "query": "How can I visualize memory connections between commits?",
+      "why": "A user wants the graph view for related memories.",
+      "relevant": [
+        "e385432",
+        "5a45bf5"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "score": 0.381734374357787
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.34173331237958
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.302788011406491
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.302530374802574
+        },
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "score": 0.296003215541577
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "Add support for multiple repositories in agent commits",
+          "score": 0.2
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "Implement backfill command for agent commits",
+          "score": 0.2
+        },
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Add title field to agent commits for better graph labeling",
+          "score": 0.2
+        },
+        {
+          "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
+          "title": "Enhance search functionality and add memory graph generation",
+          "score": 0.2
+        },
+        {
+          "sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
+          "title": "Initial scaffold for agent commits",
+          "score": 0.2
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 4,
+      "agentGitMs": 295.64708399999927,
+      "gitGrepMs": 33.49354199999925,
+      "gitKeywordMs": 0.18091699999968114
+    },
+    {
+      "query": "What happens if memory storage fails after the git commit succeeds?",
+      "why": "A maintainer needs to understand pending memory recovery.",
+      "relevant": [
+        "7bc2f41",
+        "1f2a356",
+        "379a3d1"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
+          "score": 0.319636725565092
+        },
+        {
+          "sha": "1f2a3561d6748d01ae88a79a294a59fc0338fdaf",
+          "title": "Enhance the commit process by ensuring users are aware of uncommitted changes.",
+          "score": 0.294476713982016
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.28438305014293
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.26777450682553
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.267708642378619
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
+          "title": "Enhance search functionality and add memory graph generation",
+          "score": 0.14285714285714285
+        },
+        {
+          "sha": "1f2a3561d6748d01ae88a79a294a59fc0338fdaf",
+          "title": "harden agentgit commit flow",
+          "score": 0.14285714285714285
+        },
+        {
+          "sha": "d079e1af3efecc868cdcc127e7f8b210eb21d1f4",
+          "title": "implement hybrid agent commit search",
+          "score": 0.14285714285714285
+        }
+      ],
+      "agentGitRank": 2,
+      "gitGrepRank": null,
+      "gitKeywordRank": 2,
+      "agentGitMs": 1174.0346249999993,
+      "gitGrepMs": 32.379249999999956,
+      "gitKeywordMs": 0.18637499999931606
+    },
+    {
+      "query": "What are the rules for agents before and after making code changes?",
+      "why": "A new agent needs the repository workflow instructions.",
+      "relevant": [
+        "c4250c8"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.336576090453981
+        },
+        {
+          "sha": "1f2a3561d6748d01ae88a79a294a59fc0338fdaf",
+          "title": "Enhance the commit process by ensuring users are aware of uncommitted changes.",
+          "score": 0.331617772981991
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.322096583364074
+        },
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "To enable the storage and retrieval of agent commits scoped by repository, allowing for better organization and management of commits across different projects.",
+          "score": 0.309923493637156
+        },
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "score": 0.296099119874242
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [],
+      "agentGitRank": 3,
+      "gitGrepRank": null,
+      "gitKeywordRank": null,
+      "agentGitMs": 232.1790000000001,
+      "gitGrepMs": 32.3221250000006,
+      "gitKeywordMs": 0.16937500000040018
+    },
+    {
+      "query": "How was the database setup made reliable for Supabase migrations?",
+      "why": "A developer is debugging setup and migration behavior.",
+      "relevant": [
+        "4336fae",
+        "af07997"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "af07997f520b7451dd50f7267d7d1caf257c8923",
+          "title": "Establish foundational files and configurations for the Rein project, enabling agent commit registration and interaction with Supabase.",
+          "score": 0.370829247877333
+        },
+        {
+          "sha": "556e9cb0ec74a09e1ca07076b3240ba652430255",
+          "title": "Establish a foundational plan for developing the AgentGit CLI, focusing on integrating semantic memory into git workflows.",
+          "score": 0.264311244976919
+        },
+        {
+          "sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
+          "title": "Establish a foundational structure for the agent commit system, integrating GitHub commit tracking with a local database.",
+          "score": 0.25059147701005
+        },
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "To enable the storage and retrieval of agent commits scoped by repository, allowing for better organization and management of commits across different projects.",
+          "score": 0.2481773660372
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
+          "score": 0.215583825951026
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "4336fae9ff7f8ede8faffb9ac67a668be395d5fa",
+          "title": "Refactor database setup and enhance search functionality",
+          "score": 0.3333333333333333
+        },
+        {
+          "sha": "7a768894c21549d68cd10c8e5553bd8be4baafce",
+          "title": "Restore multi-repo database support after rebase",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "update agentgit setup documentation",
+          "score": 0.16666666666666666
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 1,
+      "agentGitMs": 276.48670799999945,
+      "gitGrepMs": 32.98416599999928,
+      "gitKeywordMs": 0.2610420000000886
+    },
+    {
+      "query": "How do we backfill AgentGit memory from old git history?",
+      "why": "A maintainer wants to create memories for commits that happened before AgentGit was installed.",
+      "relevant": [
+        "0d315da"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
+          "score": 0.441830598041629
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.386688872364258
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.371471343910135
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.352854167353685
+        },
+        {
+          "sha": "556e9cb0ec74a09e1ca07076b3240ba652430255",
+          "title": "Establish a foundational plan for developing the AgentGit CLI, focusing on integrating semantic memory into git workflows.",
+          "score": 0.341799165710633
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "1dd7f00fc86020e39e25aea6658552aa60a96d6a",
+          "title": "Add benchmark for AgentGit search value",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "Implement backfill command for agent commits",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
+          "title": "Enhance search functionality and add memory graph generation",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "add agentgit agent instructions",
+          "score": 0.16666666666666666
+        },
+        {
+          "sha": "5c499d4dbe86347ac3d9f58d8a321b6d0d1789e5",
+          "title": "Update .gitignore to include .agentgit directory",
+          "score": 0.16666666666666666
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 2,
+      "agentGitMs": 234.48391699999956,
+      "gitGrepMs": 32.836207999999715,
+      "gitKeywordMs": 0.1703749999996944
+    },
+    {
+      "query": "How does AgentGit separate memories for different repositories?",
+      "why": "A team wants to avoid mixing memories from different projects.",
+      "relevant": [
+        "62975e3"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.400728636699506
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.394947969181263
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.380901490538924
+        },
+        {
+          "sha": "556e9cb0ec74a09e1ca07076b3240ba652430255",
+          "title": "Establish a foundational plan for developing the AgentGit CLI, focusing on integrating semantic memory into git workflows.",
+          "score": 0.365867126046549
+        },
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "To enable the storage and retrieval of agent commits scoped by repository, allowing for better organization and management of commits across different projects.",
+          "score": 0.363603242017597
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "1dd7f00fc86020e39e25aea6658552aa60a96d6a",
+          "title": "Add benchmark for AgentGit search value",
+          "score": 0.2
+        },
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "Add support for multiple repositories in agent commits",
+          "score": 0.2
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "add agentgit agent instructions",
+          "score": 0.2
+        },
+        {
+          "sha": "5c499d4dbe86347ac3d9f58d8a321b6d0d1789e5",
+          "title": "Update .gitignore to include .agentgit directory",
+          "score": 0.2
+        },
+        {
+          "sha": "eed87fd85fd05feccc2e0fc6c57ea9b70a84c121",
+          "title": "improve agentgit show command",
+          "score": 0.2
+        }
+      ],
+      "agentGitRank": 5,
+      "gitGrepRank": null,
+      "gitKeywordRank": 2,
+      "agentGitMs": 290.7153330000001,
+      "gitGrepMs": 32.85320899999988,
+      "gitKeywordMs": 0.18387499999971624
+    },
+    {
+      "query": "Why do agent commits have titles for graph labels?",
+      "why": "A developer wants to understand the graph labeling design.",
+      "relevant": [
+        "837737d"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "score": 0.518320342390942
+        },
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "score": 0.365618061124761
+        },
+        {
+          "sha": "a69f57689acc4451c7d38f37896c242cfb392638",
+          "title": "Clarify the purpose and usage of AgentGit in the README.",
+          "score": 0.33554798866374
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.316937357013266
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.304304742161334
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Add title field to agent commits for better graph labeling",
+          "score": 0.5
+        },
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "Add support for multiple repositories in agent commits",
+          "score": 0.3333333333333333
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "Implement backfill command for agent commits",
+          "score": 0.3333333333333333
+        },
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "Add agent view for embedding graph",
+          "score": 0.3333333333333333
+        },
+        {
+          "sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
+          "title": "Initial scaffold for agent commits",
+          "score": 0.3333333333333333
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": 1,
+      "agentGitMs": 316.7778330000001,
+      "gitGrepMs": 32.13079199999993,
+      "gitKeywordMs": 0.2800420000003214
+    },
+    {
+      "query": "Where did the UI for browsing or backfilling agent commits come from?",
+      "why": "A teammate wants to find the product-facing UI work.",
+      "relevant": [
+        "4035e3c"
+      ],
+      "agentGitResults": [
+        {
+          "sha": "4035e3c089531cc320ab8a9736fdb13d9da1cf62",
+          "title": "Enhance the user interface to support backfilling agent commit data.",
+          "score": 0.402056980898165
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
+          "score": 0.378071719483549
+        },
+        {
+          "sha": "eed87fd85fd05feccc2e0fc6c57ea9b70a84c121",
+          "title": "Enhance the agentgit CLI to allow for more flexible input when showing commit metadata.",
+          "score": 0.352573323928585
+        },
+        {
+          "sha": "c4250c8a1b0b3ac7e89cf5d1ec1cf9d6cd351b8c",
+          "title": "To provide clear guidelines for using AgentGit effectively.",
+          "score": 0.344957559675974
+        },
+        {
+          "sha": "379a3d18fd99ad79c7e2f6a3e593df1ddad2e2c4",
+          "title": "Establish a foundational command-line interface for managing agent commits alongside Git commits.",
+          "score": 0.344301025391203
+        }
+      ],
+      "gitGrepResults": [],
+      "gitKeywordResults": [
+        {
+          "sha": "62975e39eb1498b5b6f947bcc6fcab04f976ab52",
+          "title": "Add support for multiple repositories in agent commits",
+          "score": 0.4
+        },
+        {
+          "sha": "0d315da1f2dcdc3cabc20bbd1619229d754fff39",
+          "title": "Implement backfill command for agent commits",
+          "score": 0.4
+        },
+        {
+          "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
+          "title": "Add title field to agent commits for better graph labeling",
+          "score": 0.4
+        },
+        {
+          "sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
+          "title": "Initial scaffold for agent commits",
+          "score": 0.4
+        },
+        {
+          "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
+          "title": "Add agent view for embedding graph",
+          "score": 0.2
+        }
+      ],
+      "agentGitRank": 1,
+      "gitGrepRank": null,
+      "gitKeywordRank": null,
+      "agentGitMs": 265.288458,
+      "gitGrepMs": 38.46429199999966,
+      "gitKeywordMs": 0.11095899999963876
+    }
+  ]
+}

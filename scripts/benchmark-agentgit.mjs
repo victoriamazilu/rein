@@ -1,12 +1,11 @@
 import "dotenv/config";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, basename } from "node:path";
 import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 
-const datasetPath = process.argv[2] ?? "benchmarks/agentgit-search.json";
-const outputPath = process.argv[3] ?? "benchmarks/latest-report.md";
+const { datasetPath, outputPath, repo } = parseArgs(process.argv.slice(2));
 
 const STOP_WORDS = new Set([
   "the",
@@ -68,11 +67,11 @@ for (const item of dataset.queries) {
   const relevant = item.relevant.map((sha) => sha.toLowerCase());
 
   const agentGitStarted = performance.now();
-  const agentGitResults = await runAgentGitSearch(item.query, k);
+  const agentGitResults = await runAgentGitSearch(item.query, k, repo);
   const agentGitMs = performance.now() - agentGitStarted;
 
   const gitGrepStarted = performance.now();
-  const gitGrepResults = runGitGrepBaseline(item.query, k);
+  const gitGrepResults = runGitExactGrepBaseline(item.query, k);
   const gitGrepMs = performance.now() - gitGrepStarted;
 
   const gitStarted = performance.now();
@@ -95,14 +94,60 @@ for (const item of dataset.queries) {
   });
 }
 
-const report = renderReport(dataset, rows, k);
+const summary = buildSummary(rows, k);
+const report = renderReport(dataset, rows, summary, k, repo);
 mkdirSync(dirname(outputPath), { recursive: true });
 writeFileSync(outputPath, report, "utf-8");
+writeFileSync(jsonReportPath(outputPath), JSON.stringify({ repo, k, summary, rows }, null, 2), "utf-8");
 
 console.log(report);
 console.log(`\nWrote ${outputPath}`);
+console.log(`Wrote ${jsonReportPath(outputPath)}`);
 
-async function runAgentGitSearch(query, matchCount) {
+function parseArgs(args) {
+  const positional = [];
+  let explicitRepo;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg === "--repo") {
+      explicitRepo = args[++i];
+    } else if (arg.startsWith("--repo=")) {
+      explicitRepo = arg.slice("--repo=".length);
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  return {
+    datasetPath: positional[0] ?? "benchmarks/agentgit-search.json",
+    outputPath: positional[1] ?? "benchmarks/latest-report.md",
+    repo: explicitRepo ?? process.env.AGENTGIT_REPO ?? inferRepoId(),
+  };
+}
+
+function inferRepoId() {
+  try {
+    const url = execFileSync("git", ["remote", "get-url", "origin"], { encoding: "utf-8" }).trim();
+    const sshMatch = url.match(/git@github\.com:(.+?)(?:\.git)?$/);
+    if (sshMatch) return sshMatch[1];
+
+    const httpsMatch = url.match(/github\.com\/(.+?)(?:\.git)?$/);
+    if (httpsMatch) return httpsMatch[1];
+
+    return url;
+  } catch {
+    return basename(process.cwd());
+  }
+}
+
+function jsonReportPath(markdownPath) {
+  return markdownPath.endsWith(".md")
+    ? `${markdownPath.slice(0, -3)}.json`
+    : `${markdownPath}.json`;
+}
+
+async function runAgentGitSearch(query, matchCount, filterRepo) {
   const embeddingResponse = await openai.embeddings.create({
     model: embeddingModel,
     input: query,
@@ -113,6 +158,7 @@ async function runAgentGitSearch(query, matchCount) {
     query_text: query,
     query_embedding: queryEmbedding,
     match_count: matchCount,
+    filter_repo: filterRepo,
   });
 
   if (error) throw error;
@@ -140,7 +186,7 @@ function runGitKeywordBaseline(query, matchCount) {
     }));
 }
 
-function runGitGrepBaseline(query, matchCount) {
+function runGitExactGrepBaseline(query, matchCount) {
   try {
     const output = execFileSync(
       "git",
@@ -222,10 +268,39 @@ function recallAt(rows, system, limit) {
   return hits / rows.length;
 }
 
+function precisionAt(rows, system, limit) {
+  const total = rows.reduce((sum, row) => {
+    const results = getSystemResults(row, system).slice(0, limit);
+    if (results.length === 0) return sum;
+    const relevantCount = results.filter((result) => isRelevant(result.sha, row.relevant)).length;
+    return sum + relevantCount / limit;
+  }, 0);
+  return total / rows.length;
+}
+
 function meanReciprocalRank(rows, system) {
   const total = rows.reduce((sum, row) => {
     const rank = getSystemRank(row, system);
     return sum + (rank ? 1 / rank : 0);
+  }, 0);
+  return total / rows.length;
+}
+
+function ndcgAt(rows, system, limit) {
+  const total = rows.reduce((sum, row) => {
+    const results = getSystemResults(row, system).slice(0, limit);
+    const dcg = results.reduce((score, result, index) => {
+      const gain = isRelevant(result.sha, row.relevant) ? 1 : 0;
+      return score + gain / Math.log2(index + 2);
+    }, 0);
+
+    const idealRelevant = Math.min(row.relevant.length, limit);
+    const idcg = Array.from({ length: idealRelevant }).reduce(
+      (score, _, index) => score + 1 / Math.log2(index + 2),
+      0
+    );
+
+    return sum + (idcg === 0 ? 0 : dcg / idcg);
   }, 0);
   return total / rows.length;
 }
@@ -244,6 +319,69 @@ function averageMs(rows, system) {
     0
   );
   return total / rows.length;
+}
+
+function queriesWon(rows, systemA, systemB) {
+  return rows.filter((row) => compareRanks(getSystemRank(row, systemA), getSystemRank(row, systemB)) < 0).length;
+}
+
+function queriesTied(rows, systemA, systemB) {
+  return rows.filter((row) => compareRanks(getSystemRank(row, systemA), getSystemRank(row, systemB)) === 0).length;
+}
+
+function compareRanks(a, b) {
+  const normalizedA = a ?? Number.POSITIVE_INFINITY;
+  const normalizedB = b ?? Number.POSITIVE_INFINITY;
+  return normalizedA - normalizedB;
+}
+
+function percentagePointLift(rows, systemA, systemB, limit) {
+  return recallAt(rows, systemA, limit) - recallAt(rows, systemB, limit);
+}
+
+function reciprocalRankLift(rows, systemA, systemB) {
+  return meanReciprocalRank(rows, systemA) - meanReciprocalRank(rows, systemB);
+}
+
+function buildSummary(benchmarkRows, matchCount) {
+  return {
+    queryCount: benchmarkRows.length,
+    systems: {
+      agentgit: systemSummary(benchmarkRows, "agentgit", matchCount),
+      gitGrep: systemSummary(benchmarkRows, "gitGrep", matchCount),
+      gitKeyword: systemSummary(benchmarkRows, "gitKeyword", matchCount),
+    },
+    liftVsPlainGit: {
+      top1: percentagePointLift(benchmarkRows, "agentgit", "gitGrep", 1),
+      top3: percentagePointLift(benchmarkRows, "agentgit", "gitGrep", 3),
+      topK: percentagePointLift(benchmarkRows, "agentgit", "gitGrep", matchCount),
+      mrr: reciprocalRankLift(benchmarkRows, "agentgit", "gitGrep"),
+      wins: queriesWon(benchmarkRows, "agentgit", "gitGrep"),
+      ties: queriesTied(benchmarkRows, "agentgit", "gitGrep"),
+    },
+    liftVsKeyword: {
+      top1: percentagePointLift(benchmarkRows, "agentgit", "gitKeyword", 1),
+      top3: percentagePointLift(benchmarkRows, "agentgit", "gitKeyword", 3),
+      topK: percentagePointLift(benchmarkRows, "agentgit", "gitKeyword", matchCount),
+      mrr: reciprocalRankLift(benchmarkRows, "agentgit", "gitKeyword"),
+      wins: queriesWon(benchmarkRows, "agentgit", "gitKeyword"),
+      ties: queriesTied(benchmarkRows, "agentgit", "gitKeyword"),
+    },
+  };
+}
+
+function systemSummary(benchmarkRows, system, matchCount) {
+  return {
+    precisionAt1: precisionAt(benchmarkRows, system, 1),
+    precisionAt3: precisionAt(benchmarkRows, system, 3),
+    top1: recallAt(benchmarkRows, system, 1),
+    top3: recallAt(benchmarkRows, system, 3),
+    topK: recallAt(benchmarkRows, system, matchCount),
+    mrr: meanReciprocalRank(benchmarkRows, system),
+    ndcgAtK: ndcgAt(benchmarkRows, system, matchCount),
+    averageWinningRank: averageRank(benchmarkRows, system),
+    averageMs: averageMs(benchmarkRows, system),
+  };
 }
 
 function getSystemResults(row, system) {
@@ -271,6 +409,15 @@ function formatPercent(value) {
   return `${Math.round(value * 100)}%`;
 }
 
+function formatSignedPercent(value) {
+  const rounded = Math.round(value * 100);
+  return `${rounded >= 0 ? "+" : ""}${rounded} points`;
+}
+
+function formatSignedNumber(value) {
+  return `${value >= 0 ? "+" : ""}${formatNumber(value)}`;
+}
+
 function formatRank(value) {
   return value === null ? "miss" : String(value);
 }
@@ -283,42 +430,64 @@ function shortSha(sha) {
   return sha.slice(0, 7);
 }
 
-function renderReport(dataset, benchmarkRows, matchCount) {
+function renderReport(dataset, benchmarkRows, summary, matchCount, repoId) {
   const now = new Date().toISOString();
-  const agentAvgRank = averageRank(benchmarkRows, "agentgit");
-  const gitGrepAvgRank = averageRank(benchmarkRows, "gitGrep");
-  const gitKeywordAvgRank = averageRank(benchmarkRows, "gitKeyword");
+  const agent = summary.systems.agentgit;
+  const gitGrep = summary.systems.gitGrep;
+  const gitKeyword = summary.systems.gitKeyword;
 
   const lines = [
     `# ${dataset.name}`,
     "",
     `Generated: ${now}`,
+    `Repo: ${repoId}`,
+    `Questions: ${summary.queryCount}`,
     "",
     dataset.description ?? "",
     "",
+    "## Executive Summary",
+    "",
+    `AgentGit found the right commit in the top 3 for ${formatPercent(agent.top3)} of questions. Exact grep found ${formatPercent(gitGrep.top3)}. The stronger keyword sanity check found ${formatPercent(gitKeyword.top3)}.`,
+    "",
+    `Compared with the stronger keyword baseline, AgentGit improves top-3 accuracy by ${formatSignedPercent(summary.liftVsKeyword.top3)} and mean reciprocal rank by ${formatSignedNumber(summary.liftVsKeyword.mrr)}.`,
+    "",
+    `AgentGit beat exact grep on ${summary.liftVsPlainGit.wins}/${summary.queryCount} questions and beat the stronger keyword baseline on ${summary.liftVsKeyword.wins}/${summary.queryCount} questions.`,
+    "",
     "## What This Measures",
     "",
-    "This benchmark asks beginner-style project questions and checks whether each system finds the commit that contains the useful answer.",
+    "This benchmark asks project-history questions and checks whether each system finds the commit that contains the useful answer.",
     "",
-    "- AgentGit = semantic memory search over AgentCommit notes.",
-    "- Plain Git = real `git log --grep` search over normal commit messages.",
-    "- Keyword sanity check = a stronger custom keyword search over normal commit messages.",
+    "- AgentGit = semantic memory search over AgentCommit notes. It can match meaning even when the exact words differ.",
+    "- Exact grep = real `git log --grep` over normal commit messages. It only finds the exact query text.",
+    "- Keyword sanity check = a stronger custom token-overlap search over normal commit messages. It is closer to search than raw grep, but still cannot understand meaning.",
+    "",
+    "This split matters because the product claim is not merely that AgentGit is another text search box. The claim is that semantic memory answers vague project-history questions that grep-style exact matching misses.",
     "",
     "## Headline Results",
     "",
-    "| Metric | AgentGit | Plain Git `log --grep` | Keyword sanity check |",
+    "| Metric | AgentGit | Exact grep `git log --grep` | Keyword sanity check |",
     "| --- | ---: | ---: | ---: |",
-    `| Right answer in top 1 | ${formatPercent(recallAt(benchmarkRows, "agentgit", 1))} | ${formatPercent(recallAt(benchmarkRows, "gitGrep", 1))} | ${formatPercent(recallAt(benchmarkRows, "gitKeyword", 1))} |`,
-    `| Right answer in top 3 | ${formatPercent(recallAt(benchmarkRows, "agentgit", 3))} | ${formatPercent(recallAt(benchmarkRows, "gitGrep", 3))} | ${formatPercent(recallAt(benchmarkRows, "gitKeyword", 3))} |`,
-    `| Right answer in top ${matchCount} | ${formatPercent(recallAt(benchmarkRows, "agentgit", matchCount))} | ${formatPercent(recallAt(benchmarkRows, "gitGrep", matchCount))} | ${formatPercent(recallAt(benchmarkRows, "gitKeyword", matchCount))} |`,
-    `| Mean reciprocal rank | ${formatNumber(meanReciprocalRank(benchmarkRows, "agentgit"))} | ${formatNumber(meanReciprocalRank(benchmarkRows, "gitGrep"))} | ${formatNumber(meanReciprocalRank(benchmarkRows, "gitKeyword"))} |`,
-    `| Average winning rank | ${formatNumber(agentAvgRank)} | ${formatNumber(gitGrepAvgRank)} | ${formatNumber(gitKeywordAvgRank)} |`,
-    `| Average query time | ${formatNumber(averageMs(benchmarkRows, "agentgit"))} ms | ${formatNumber(averageMs(benchmarkRows, "gitGrep"))} ms | ${formatNumber(averageMs(benchmarkRows, "gitKeyword"))} ms |`,
+    `| Precision@1 | ${formatPercent(agent.precisionAt1)} | ${formatPercent(gitGrep.precisionAt1)} | ${formatPercent(gitKeyword.precisionAt1)} |`,
+    `| Precision@3 | ${formatPercent(agent.precisionAt3)} | ${formatPercent(gitGrep.precisionAt3)} | ${formatPercent(gitKeyword.precisionAt3)} |`,
+    `| Right answer in top 1 | ${formatPercent(agent.top1)} | ${formatPercent(gitGrep.top1)} | ${formatPercent(gitKeyword.top1)} |`,
+    `| Right answer in top 3 | ${formatPercent(agent.top3)} | ${formatPercent(gitGrep.top3)} | ${formatPercent(gitKeyword.top3)} |`,
+    `| Right answer in top ${matchCount} | ${formatPercent(agent.topK)} | ${formatPercent(gitGrep.topK)} | ${formatPercent(gitKeyword.topK)} |`,
+    `| Mean reciprocal rank | ${formatNumber(agent.mrr)} | ${formatNumber(gitGrep.mrr)} | ${formatNumber(gitKeyword.mrr)} |`,
+    `| nDCG@${matchCount} | ${formatNumber(agent.ndcgAtK)} | ${formatNumber(gitGrep.ndcgAtK)} | ${formatNumber(gitKeyword.ndcgAtK)} |`,
+    `| Average winning rank | ${formatNumber(agent.averageWinningRank)} | ${formatNumber(gitGrep.averageWinningRank)} | ${formatNumber(gitKeyword.averageWinningRank)} |`,
+    `| Average query time | ${formatNumber(agent.averageMs)} ms | ${formatNumber(gitGrep.averageMs)} ms | ${formatNumber(gitKeyword.averageMs)} ms |`,
+    "",
+    "## Lift",
+    "",
+    "| Comparison | Top 1 lift | Top 3 lift | Top 5 lift | MRR lift | Wins | Ties |",
+    "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
+    `| AgentGit vs exact grep | ${formatSignedPercent(summary.liftVsPlainGit.top1)} | ${formatSignedPercent(summary.liftVsPlainGit.top3)} | ${formatSignedPercent(summary.liftVsPlainGit.topK)} | ${formatSignedNumber(summary.liftVsPlainGit.mrr)} | ${summary.liftVsPlainGit.wins}/${summary.queryCount} | ${summary.liftVsPlainGit.ties}/${summary.queryCount} |`,
+    `| AgentGit vs keyword sanity check | ${formatSignedPercent(summary.liftVsKeyword.top1)} | ${formatSignedPercent(summary.liftVsKeyword.top3)} | ${formatSignedPercent(summary.liftVsKeyword.topK)} | ${formatSignedNumber(summary.liftVsKeyword.mrr)} | ${summary.liftVsKeyword.wins}/${summary.queryCount} | ${summary.liftVsKeyword.ties}/${summary.queryCount} |`,
     "",
     "## Query-Level Results",
     "",
-    "| Question | Expected commit | AgentGit rank | Plain Git rank | Keyword rank | AgentGit top result | Plain Git top result |",
-    "| --- | --- | ---: | ---: | ---: | --- | --- |",
+    "| Question | Why it matters | Expected commit | AgentGit rank | Exact grep rank | Keyword rank | AgentGit top result | Keyword top result |",
+    "| --- | --- | --- | ---: | ---: | ---: | --- | --- |",
   ];
 
   for (const row of benchmarkRows) {
@@ -328,8 +497,11 @@ function renderReport(dataset, benchmarkRows, matchCount) {
     const gitTop = row.gitGrepResults[0]
       ? `${shortSha(row.gitGrepResults[0].sha)} ${escapePipes(row.gitGrepResults[0].title)}`
       : "no result";
+    const keywordTop = row.gitKeywordResults[0]
+      ? `${shortSha(row.gitKeywordResults[0].sha)} ${escapePipes(row.gitKeywordResults[0].title)}`
+      : "no result";
     lines.push(
-      `| ${escapePipes(row.query)} | ${row.relevant.join(", ")} | ${formatRank(row.agentGitRank)} | ${formatRank(row.gitGrepRank)} | ${formatRank(row.gitKeywordRank)} | ${agentTop} | ${gitTop} |`
+      `| ${escapePipes(row.query)} | ${escapePipes(row.why)} | ${row.relevant.join(", ")} | ${formatRank(row.agentGitRank)} | ${formatRank(row.gitGrepRank)} | ${formatRank(row.gitKeywordRank)} | ${agentTop} | ${keywordTop} |`
     );
   }
 
@@ -339,7 +511,9 @@ function renderReport(dataset, benchmarkRows, matchCount) {
     "",
     "A higher top-1/top-3 score means the tool finds the useful answer sooner. Mean reciprocal rank rewards systems that put the right answer near the top. Query time shows the speed tradeoff.",
     "",
-    "The main proof point is AgentGit versus plain Git search. The keyword sanity check is included to show whether plain commit messages are already good enough for a question.",
+    "The main proof point is AgentGit versus exact grep because grep is the default mental model many developers have for searching old text. The keyword sanity check keeps the benchmark honest by testing whether normal commit messages are already enough when exact phrase matching is relaxed.",
+    "",
+    "A good demo line is: grep requires the user to guess the words already used in history; AgentGit lets the user ask the question in their own words.",
     ""
   );
 
