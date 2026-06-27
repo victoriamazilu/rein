@@ -19,6 +19,7 @@
     "db:setup": "node scripts/setup-db.mjs 001_agent_commits.sql",
     "db:migrate:title": "node scripts/setup-db.mjs 003_add_title.sql",
     "db:migrate:repo": "node scripts/setup-db.mjs 004_add_repo.sql",
+    "benchmark": "node scripts/benchmark-agentgit.mjs",
     "backboard:smoke": "node scripts/backboard-smoke.mjs",
     "backfill": "tsx src/cli.ts backfill"
   },
