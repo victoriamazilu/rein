@@ -144,7 +144,7 @@ program
   .option("-q, --query <query>", "Highlight search results for a query (simulates agent lookup)")
   .option(
     "--threshold <similarity>",
-    "Minimum cosine similarity for a thick semantic link (0–1)",
+    "Minimum similarity for a thick semantic link (0–1)",
     String(DEFAULT_SEMANTIC_THRESHOLD)
   )
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")

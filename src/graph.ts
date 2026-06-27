@@ -23,8 +23,8 @@ export interface GraphEdge {
   label?: string;
 }
 
-/** Default minimum cosine similarity to draw a semantic link between commits. */
-export const DEFAULT_SEMANTIC_THRESHOLD = 0.7;
+/** Default minimum similarity to draw a semantic link between commits. */
+export const DEFAULT_SEMANTIC_THRESHOLD = 0.5;
 
 export interface MemoryGraph {
   nodes: GraphNode[];
@@ -58,6 +58,71 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   }
   const denom = Math.sqrt(normA) * Math.sqrt(normB);
   return denom === 0 ? 0 : dot / denom;
+}
+
+const GENERIC_GRAPH_TOKENS = new Set([
+  "add",
+  "adds",
+  "added",
+  "adding",
+  "change",
+  "changes",
+  "component",
+  "components",
+  "experience",
+  "feature",
+  "fix",
+  "improve",
+  "improves",
+  "improved",
+  "project",
+  "projects",
+  "refactor",
+  "section",
+  "sections",
+  "setup",
+  "update",
+  "updates",
+  "updated",
+  "user",
+  "users",
+]);
+
+function graphText(node: GraphNode): string {
+  return `${node.title} ${node.intent} ${node.notes}`.toLowerCase();
+}
+
+function graphTokens(text: string): Set<string> {
+  return new Set(
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, " ")
+      .split(/\s+/)
+      .filter((token) => token.length >= 3 && !GENERIC_GRAPH_TOKENS.has(token))
+  );
+}
+
+function lexicalGraphSimilarity(a: GraphNode, b: GraphNode): number {
+  const aTokens = graphTokens(graphText(a));
+  const bTokens = graphTokens(graphText(b));
+
+  let sharedTokenCount = 0;
+  for (const token of aTokens) {
+    if (bTokens.has(token)) sharedTokenCount++;
+  }
+
+  if (sharedTokenCount === 0) return 0;
+
+  const smallerSetCoverage = sharedTokenCount / Math.min(aTokens.size, bTokens.size);
+  const diceCoefficient = (2 * sharedTokenCount) / (aTokens.size + bTokens.size);
+
+  return Math.max(smallerSetCoverage, diceCoefficient);
+}
+
+function graphSimilarity(a: GraphNode, b: GraphNode): number {
+  const embeddingSimilarity =
+    a.embedding && b.embedding ? cosineSimilarity(a.embedding, b.embedding) : 0;
+  return Math.max(embeddingSimilarity, lexicalGraphSimilarity(a, b));
 }
 
 export function shortenGraphLabel(text: string, maxLength = 26): string {
@@ -99,7 +164,7 @@ export function buildMemoryGraph(
   opts?: { similarityThreshold?: number; maxSemanticEdgesPerNode?: number }
 ): MemoryGraph {
   const threshold = opts?.similarityThreshold ?? DEFAULT_SEMANTIC_THRESHOLD;
-  const maxPerNode = opts?.maxSemanticEdgesPerNode ?? 3;
+  const maxPerNode = opts?.maxSemanticEdgesPerNode ?? 4;
 
   const nodes: GraphNode[] = commits
     .slice()
@@ -124,15 +189,13 @@ export function buildMemoryGraph(
 
   for (let i = 0; i < nodes.length; i++) {
     const source = nodes[i];
-    if (!source.embedding) continue;
 
     const neighbors: GraphEdge[] = [];
     for (let j = 0; j < nodes.length; j++) {
       if (i === j) continue;
       const target = nodes[j];
-      if (!target.embedding) continue;
 
-      const similarity = cosineSimilarity(source.embedding, target.embedding);
+      const similarity = graphSimilarity(source, target);
       if (similarity < threshold) continue;
 
       neighbors.push({
@@ -371,7 +434,7 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     if (semanticCount === 0) {
       hudStats.textContent =
         raw.nodes.length + " notes · no semantic links at ≥ " + semanticThreshold.toFixed(2) +
-        " · try --threshold 0.75";
+        " · try --threshold 0.50";
     } else {
       hudStats.textContent =
         raw.nodes.length + " notes · " + semanticCount + " semantic link" +
