@@ -74,10 +74,16 @@ export class AgentCommitStore {
   }
 
   async listByRepo(_repo: string): Promise<AgentCommit[]> {
+    return this.listAll();
+  }
+
+  async listAll(): Promise<AgentCommit[]> {
     const { data, error } = await this.supabase
       .from("agent_commits")
-      .select("id, sha, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at")
-      .order("created_at", { ascending: false });
+      .select(
+        "id, sha, intent, reasoning_trace, notes_for_future_agents, embedding_text, embedding, created_at"
+      )
+      .order("created_at", { ascending: true });
 
     if (error) throw error;
     return (data ?? []) as AgentCommit[];
