@@ -24,7 +24,7 @@ export interface GraphEdge {
 }
 
 /** Default minimum cosine similarity to draw a semantic link between commits. */
-export const DEFAULT_SEMANTIC_THRESHOLD = 0.78;
+export const DEFAULT_SEMANTIC_THRESHOLD = 0.7;
 
 export interface MemoryGraph {
   nodes: GraphNode[];

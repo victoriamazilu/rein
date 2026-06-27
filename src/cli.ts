@@ -16,7 +16,7 @@ import {
   isInsideGitRepo,
   resolveCommitSha,
 } from "./git.js";
-import { addSearchEdges, buildMemoryGraph, writeGraphHtml } from "./graph.js";
+import { addSearchEdges, buildMemoryGraph, DEFAULT_SEMANTIC_THRESHOLD, writeGraphHtml } from "./graph.js";
 import { backfillAgentCommits } from "./backfill.js";
 import { distillAgentCommit, embedText } from "./llm.js";
 
@@ -29,7 +29,7 @@ program
 
 program
   .command("commit")
-  .description("Create a git commit and store AgentCommit semantic memory")
+  .description("Create a git commit and store semantic memory in agent_commits")
   .option("--dry-run", "Generate and print memory without committing")
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (opts: { dryRun?: boolean; repo?: string }) => {
@@ -49,7 +49,7 @@ program
       const recentCommits = getRecentCommits();
       const stagedDiff = getStagedDiff();
 
-      console.log("Distilling staged changes into AgentCommit memory...");
+      console.log("Distilling staged changes for agent_commits...");
       const distilled = await distillAgentCommit({ status, recentCommits, stagedDiff });
 
       if (opts.dryRun) {
@@ -65,7 +65,7 @@ program
         console.log("Generating embedding...");
         const embedding = await embedText(distilled.embedding_text);
 
-        console.log("Storing AgentCommit in Supabase...");
+        console.log("Storing in agent_commits...");
         const store = new AgentCommitStore(createSupabase());
         const existing = await store.getBySha(sha, repo);
         const agentCommit =
@@ -89,7 +89,7 @@ program
         console.log(`Notes: ${agentCommit.notes_for_future_agents}`);
       } catch (err) {
         writePendingAgentCommit(sha, { repo, sha, ...distilled, created_at: new Date().toISOString() });
-        console.warn("\n⚠ Git commit was created, but AgentCommit storage failed.");
+        console.warn("\n⚠ Git commit was created, but agent_commits storage failed.");
         console.warn(`Saved pending memory to .agentgit/pending/${sha}.json`);
         throw err;
       }
@@ -100,7 +100,7 @@ program
 
 program
   .command("search")
-  .description("Hybrid semantic + keyword search over AgentCommit memory")
+  .description("Hybrid semantic + keyword search over agent_commits")
   .argument("<query...>", "Search query")
   .option("-n, --count <count>", "Number of results", "10")
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
@@ -113,7 +113,7 @@ program
       }
 
       const repo = resolveRepo(opts.repo);
-      console.log(`Searching AgentCommit memory for ${repo}...`);
+      console.log(`Searching agent_commits for ${repo}...`);
       const queryEmbedding = await embedText(query);
       const store = new AgentCommitStore(createSupabase());
       const results = await store.search(query, queryEmbedding, repo, count);
@@ -139,13 +139,13 @@ program
 
 program
   .command("graph")
-  .description("Generate an interactive HTML graph of AgentCommit memory connections")
+  .description("Generate an interactive HTML graph of agent_commits connections")
   .option("-o, --output <path>", "Output HTML path", ".agentgit/memory-graph.html")
   .option("-q, --query <query>", "Highlight search results for a query (simulates agent lookup)")
   .option(
     "--threshold <similarity>",
     "Minimum cosine similarity for a thick semantic link (0–1)",
-    "0.78"
+    String(DEFAULT_SEMANTIC_THRESHOLD)
   )
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (opts: { output: string; query?: string; threshold: string; repo?: string }) => {
@@ -244,7 +244,7 @@ program
 
 program
   .command("show")
-  .description("Show AgentCommit metadata for a git commit ref")
+  .description("Show agent_commits metadata for a git commit ref")
   .argument("[ref]", "Git commit ref, SHA, or short SHA", "HEAD")
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (ref: string, opts: { repo?: string }) => {
@@ -255,7 +255,7 @@ program
       const agentCommit = await store.getBySha(sha, repo);
 
       if (!agentCommit) {
-        console.error(`No AgentCommit found for ${ref} (${sha}) in ${repo}`);
+        console.error(`No agent_commits row found for ${ref} (${sha}) in ${repo}`);
         process.exit(1);
       }
 

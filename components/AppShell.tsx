@@ -1,43 +1,54 @@
+"use client";
+
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { githubUser, repositories } from "@/lib/mockData";
+import { useWorkspace } from "@/components/WorkspaceProvider";
+import { listOrganizations } from "@/lib/workspace";
+import { orgPath } from "@/lib/types";
 
 export function AppShell({ children }: { children: ReactNode }) {
+  const { repos, ready } = useWorkspace();
+  const organizations = ready ? listOrganizations(repos) : [];
+
   return (
     <div className="app-shell">
-      <aside className="sidebar" aria-label="Rein repositories">
-        <Link href="/" className="logo" aria-label="Rein home">
-          <span className="logo-mark" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-            <span />
-          </span>
-          <span>Rein</span>
-        </Link>
-
-        <nav className="repo-nav">
-          <p className="nav-label">Repositories</p>
-          {repositories.map((repo) => (
-            <Link className="repo-nav-link" href={`/repo/${repo.name}`} key={repo.name}>
-              <span>{repo.name}</span>
-              <small>{repo.language}</small>
+      <header className="global-header">
+        <div className="global-header-inner">
+          <div className="global-header-start">
+            <Link href="/" className="brand" aria-label="Rein home">
+              <span className="brand-mark" aria-hidden="true" />
+              <span>Rein</span>
             </Link>
-          ))}
-        </nav>
-      </aside>
+            <label className="search-shell">
+              <span className="sr-only">Search repositories</span>
+              <input type="search" placeholder="Search repositories…" disabled />
+            </label>
+          </div>
+          <nav className="global-header-end" aria-label="Account">
+            <Link href="/account" className="account-chip">
+              <span className="account-avatar" aria-hidden="true">
+                R
+              </span>
+              <span>Workspace</span>
+            </Link>
+          </nav>
+        </div>
+      </header>
 
-      <div className="workspace">
-        <header className="topbar">
-          <Link href="/account" className="account-link">
-            <img src={githubUser.avatarUrl} alt="" />
-            <span>{githubUser.name}</span>
-          </Link>
-        </header>
-        <main>{children}</main>
-      </div>
+      {organizations.length > 0 ? (
+        <div className="subnav">
+          <div className="subnav-inner">
+            <span className="subnav-label">Organizations</span>
+            {organizations.map((org) => (
+              <Link href={orgPath(org.slug)} key={org.slug} className="subnav-link">
+                {org.name}
+              </Link>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      <main className="main-content">{children}</main>
     </div>
   );
 }
