@@ -1,0 +1,42 @@
+{
+  "name": "AgentGit search value benchmark",
+  "description": "A small starter benchmark that checks whether AgentGit finds the commit memory a new teammate or future agent would need.",
+  "k": 5,
+  "queries": [
+    {
+      "query": "What is this project and how does AgentGit remember code decisions?",
+      "relevant": ["379a3d1", "a69f576", "556e9cb"],
+      "why": "A beginner asks for the original product plan and purpose."
+    },
+    {
+      "query": "How is hybrid vector and keyword search implemented?",
+      "relevant": ["d079e1a", "4336fae"],
+      "why": "A developer needs the commit that introduced search ranking."
+    },
+    {
+      "query": "How do I show stored memory for HEAD or a short SHA?",
+      "relevant": ["eed87fd"],
+      "why": "A user wants the command behavior for showing AgentCommit metadata."
+    },
+    {
+      "query": "How can I visualize memory connections between commits?",
+      "relevant": ["e385432", "5a45bf5"],
+      "why": "A user wants the graph view for related memories."
+    },
+    {
+      "query": "What happens if memory storage fails after the git commit succeeds?",
+      "relevant": ["7bc2f41", "1f2a356", "379a3d1"],
+      "why": "A maintainer needs to understand pending memory recovery."
+    },
+    {
+      "query": "What are the rules for agents before and after making code changes?",
+      "relevant": ["c4250c8"],
+      "why": "A new agent needs the repository workflow instructions."
+    },
+    {
+      "query": "How was the database setup made reliable for Supabase migrations?",
+      "relevant": ["4336fae", "af07997"],
+      "why": "A developer is debugging setup and migration behavior."
+    }
+  ]
+}
