@@ -6,6 +6,7 @@ import {
   type GitHubCommit,
 } from "./github";
 import { loadLocalRepositoryData } from "./localRepositoryDb";
+import { isLocalSeedRepo } from "./localSeedRepos";
 import { listAgentCommitsForRepo, countAgentCommitsForRepo } from "./supabase";
 import type { Commit, RepositorySummary, SemanticCommitGraph } from "./types";
 import { repoKey } from "./types";
@@ -105,7 +106,7 @@ export async function loadRepositoryData(org: string, name: string): Promise<Rep
     throw new GitHubError(`Repository ${repoKey(org, name)} was not found in the local database.`, 404);
   }
 
-  if (source === "remote") {
+  if (source === "remote" || !isLocalSeedRepo(org, name)) {
     return loadRemoteRepositoryData(org, name);
   }
 

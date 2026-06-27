@@ -25,10 +25,4 @@ export const localWorkspaceRepos: WorkspaceRepo[] = [
     url: "https://github.com/northstar-labs/release-gate.git",
     addedAt: "2026-06-22T22:16:00.000Z",
   },
-  {
-    org: "victoriamazilu",
-    name: "rein",
-    url: "https://github.com/victoriamazilu/rein.git",
-    addedAt: "2026-06-26T14:20:00.000Z",
-  },
 ];

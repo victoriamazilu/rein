@@ -48,9 +48,17 @@ export function PageHeader({
   );
 }
 
-export function StatPill({ label, value }: { label: string; value: string | number }) {
+export function StatPill({
+  label,
+  value,
+  complete,
+}: {
+  label: string;
+  value: string | number;
+  complete?: boolean;
+}) {
   return (
-    <span className="stat-pill">
+    <span className={`stat-pill${complete ? " stat-pill-complete" : ""}`}>
       <strong>{value}</strong> {label}
     </span>
   );

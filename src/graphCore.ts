@@ -263,9 +263,9 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     * { box-sizing: border-box; }
     html, body { margin: 0; height: 100%; overflow: hidden; }
     body {
-      font: 13px/1.45 "Inter", ui-sans-serif, system-ui, sans-serif;
-      background: #1e1e1e;
-      color: #dcddde;
+      font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #f6f8fa;
+      color: #1f2328;
     }
     #canvas {
       position: fixed;
@@ -279,17 +279,17 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     .node-title {
       font-size: 12px;
       font-weight: 500;
-      fill: rgba(220, 221, 222, 0.55);
+      fill: rgba(31, 35, 40, 0.62);
     }
     .node-sub {
       font-size: 9px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      fill: rgba(167, 139, 250, 0.45);
+      fill: rgba(101, 109, 118, 0.75);
     }
-    .node.active .node-title { fill: rgba(220, 221, 222, 0.98); }
-    .node.active .node-sub { fill: rgba(196, 181, 253, 0.85); }
-    .node.dim .node-title { fill: rgba(220, 221, 222, 0.1); }
-    .node.dim .node-sub { fill: rgba(167, 139, 250, 0.08); }
+    .node.active .node-title { fill: rgba(31, 35, 40, 0.96); }
+    .node.active .node-sub { fill: rgba(9, 105, 218, 0.85); }
+    .node.dim .node-title { fill: rgba(31, 35, 40, 0.12); }
+    .node.dim .node-sub { fill: rgba(101, 109, 118, 0.1); }
     .hud {
       position: fixed;
       top: 14px;
@@ -302,33 +302,34 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       font-size: 13px;
       font-weight: 600;
       letter-spacing: 0.02em;
-      color: #a78bfa;
+      color: #1f2328;
     }
     .hud p {
       margin: 0;
       font-size: 11px;
-      color: rgba(220, 221, 222, 0.45);
+      color: #656d76;
     }
     #detail {
       position: fixed;
       top: 14px;
       right: 14px;
       width: min(340px, calc(100vw - 28px));
-      background: rgba(37, 37, 38, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(255, 255, 255, 0.96);
+      border: 1px solid #d0d7de;
       border-radius: 6px;
       padding: 14px 16px;
       display: none;
       max-height: calc(100vh - 28px);
       overflow: auto;
       backdrop-filter: blur(8px);
+      box-shadow: 0 8px 32px rgb(26 26 26 / 0.06);
       z-index: 2;
     }
     #detail h2 {
       margin: 0 0 4px;
       font-size: 14px;
       font-weight: 600;
-      color: #dcddde;
+      color: #1f2328;
       line-height: 1.35;
     }
     #detail .sha {
@@ -336,25 +337,25 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       margin-bottom: 10px;
       font-size: 10px;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      color: rgba(167, 139, 250, 0.75);
+      color: #656d76;
     }
     #detail .label {
       font-size: 10px;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      color: rgba(220, 221, 222, 0.35);
+      color: #656d76;
       margin: 10px 0 4px;
     }
     #detail p {
       margin: 0;
-      color: rgba(220, 221, 222, 0.82);
+      color: #1f2328;
       white-space: pre-wrap;
     }
     #detail code {
       display: block;
       margin-top: 12px;
       font-size: 10px;
-      color: rgba(167, 139, 250, 0.8);
+      color: #0969da;
       word-break: break-all;
     }
     .controls {
@@ -366,17 +367,19 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       z-index: 2;
     }
     .controls button {
-      background: rgba(37, 37, 38, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      color: rgba(220, 221, 222, 0.7);
+      background: #ffffff;
+      border: 1px solid #d0d7de;
+      color: #1f2328;
       border-radius: 4px;
       padding: 6px 10px;
       font-size: 11px;
       cursor: pointer;
+      box-shadow: 0 1px 2px rgb(26 26 26 / 0.04);
     }
     .controls button:hover {
-      color: #c4b5fd;
-      border-color: rgba(167, 139, 250, 0.35);
+      color: #0550ae;
+      border-color: #0969da;
+      background: #f6f8fa;
     }
   </style>
 </head>
@@ -452,9 +455,9 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       .join("line")
       .attr("class", (d) => "link " + d.kind)
       .attr("stroke", (d) => {
-        if (d.kind === "search") return "rgba(251, 191, 36, 0.55)";
-        if (d.kind === "temporal") return "rgba(255, 255, 255, 0.08)";
-        return "rgba(167, 139, 250, 0.55)";
+        if (d.kind === "search") return "rgba(212, 167, 44, 0.65)";
+        if (d.kind === "temporal") return "rgba(31, 35, 40, 0.12)";
+        return "rgba(9, 105, 218, 0.38)";
       })
       .attr("stroke-width", (d) => {
         if (d.kind === "search") return 2 + d.weight * 2;
@@ -507,9 +510,9 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
 
     node.append("circle")
       .attr("r", (d) => (d.isSearch ? 7 : 5))
-      .attr("fill", (d) => (d.isSearch ? "#fbbf24" : "#7c6aef"))
-      .attr("stroke", (d) => (d.isSearch ? "#f59e0b" : "#a78bfa"))
-      .attr("fill-opacity", 0.85);
+      .attr("fill", (d) => (d.isSearch ? "#d4a72c" : "#0969da"))
+      .attr("stroke", (d) => (d.isSearch ? "#bf8700" : "#0550ae"))
+      .attr("fill-opacity", 0.9);
 
     node.each(function (d) {
       const g = d3.select(this);
@@ -583,9 +586,9 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
 
     function linkColor(d, neighbors) {
       const highlighted = neighbors && neighbors.has(d.source.id || d.source) && neighbors.has(d.target.id || d.target);
-      if (d.kind === "search") return highlighted ? "rgba(251, 191, 36, 0.9)" : "rgba(251, 191, 36, 0.55)";
-      if (d.kind === "temporal") return highlighted ? "rgba(255, 255, 255, 0.25)" : "rgba(255, 255, 255, 0.08)";
-      return highlighted ? "rgba(196, 181, 253, 0.95)" : "rgba(167, 139, 250, 0.55)";
+      if (d.kind === "search") return highlighted ? "rgba(191, 135, 0, 0.9)" : "rgba(212, 167, 44, 0.65)";
+      if (d.kind === "temporal") return highlighted ? "rgba(31, 35, 40, 0.28)" : "rgba(31, 35, 40, 0.12)";
+      return highlighted ? "rgba(9, 105, 218, 0.72)" : "rgba(9, 105, 218, 0.38)";
     }
 
     function showDetail(d) {

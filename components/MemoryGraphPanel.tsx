@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { UI_GRAPH_THRESHOLD } from "@/lib/agentGraph";
-import { repoKey } from "@/lib/types";
 
 type MemoryGraphPanelProps = {
   org: string;
@@ -34,10 +33,8 @@ export function MemoryGraphPanel({ org, name }: MemoryGraphPanelProps) {
       const html = await res.text();
       const nodes = res.headers.get("X-Graph-Nodes");
       const edges = res.headers.get("X-Graph-Edges");
-      const threshold = res.headers.get("X-Graph-Threshold");
       if (nodes && edges) {
-        const thresholdLabel = threshold ? ` · threshold ≥ ${threshold}` : "";
-        setMeta(`${nodes} nodes · ${edges} semantic links${thresholdLabel}`);
+        setMeta(`${nodes} · ${edges} links`);
       }
 
       setIframeSrc((previous) => {
@@ -63,9 +60,7 @@ export function MemoryGraphPanel({ org, name }: MemoryGraphPanelProps) {
       <div className="panel-header">
         <div>
           <h2>Memory graph</h2>
-          <span className="muted">
-            {meta ?? `Interactive agent_commits graph for ${repoKey(org, name)}`}
-          </span>
+          {meta ? <span className="muted">{meta}</span> : null}
         </div>
         <div className="page-actions-group">
           <button
@@ -77,7 +72,7 @@ export function MemoryGraphPanel({ org, name }: MemoryGraphPanelProps) {
               else void loadGraph();
             }}
           >
-            {loading ? "Generating…" : open ? "Hide graph" : "Show graph"}
+            {loading ? "…" : open ? "Hide" : "Show"}
           </button>
           <button
             type="button"
@@ -85,7 +80,7 @@ export function MemoryGraphPanel({ org, name }: MemoryGraphPanelProps) {
             disabled={loading}
             onClick={() => void loadGraph()}
           >
-            {loading ? "Regenerating…" : "Regenerate graph"}
+            {loading ? "…" : "Refresh"}
           </button>
         </div>
       </div>
@@ -98,13 +93,7 @@ export function MemoryGraphPanel({ org, name }: MemoryGraphPanelProps) {
 
       {open && iframeSrc && !error ? (
         <iframe title={`Memory graph for ${org}/${name}`} src={iframeSrc} className="graph-frame" />
-      ) : (
-        !error && (
-          <div className="empty-panel muted">
-            <p>Generate the graph from stored agent_commits in Supabase.</p>
-          </div>
-        )
-      )}
+      ) : null}
     </section>
   );
 }

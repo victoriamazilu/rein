@@ -136,19 +136,6 @@ const repos = [
     topicWeights: { policy: 0.44, release: 0.24, traceability: 0.18, search: 0.06, fixtures: 0.05, interface: 0.03 },
     authors: ["Priya Singh", "Marcus Lee", "Iris Chen", "Noah Reed", "Lena Ortiz"],
   },
-  {
-    org: "victoriamazilu",
-    name: "rein",
-    url: "https://github.com/victoriamazilu/rein.git",
-    language: "TypeScript",
-    defaultBranch: "main",
-    description:
-      "Agent-native memory layer whose own Semantic Embedding Commit Graph links project foundation, local data access, backfill UI, memory graph visualization, and hybrid search evolution. AgentGit makes repository history navigable by architecture and intent, surfacing related graph nodes for vague questions about memory or search; GrepGit remains limited to literal text matches in commits and files.",
-    commitCount: 320,
-    startDaysAgo: 640,
-    topicWeights: { search: 0.28, fixtures: 0.22, interface: 0.18, workspace: 0.14, traceability: 0.1, evaluation: 0.08 },
-    authors: ["Victoria Mazilu", "Alex Morgan", "Nadia Kim", "Owen Brooks"],
-  },
 ];
 
 function mulberry32(seed) {
