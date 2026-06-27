@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Commit, RepositorySummary } from "@/lib/types";
+import type { Commit, RepositorySummary, SemanticCommitGraph } from "@/lib/types";
 
 type RepoDataState = {
   loading: boolean;
   error: string | null;
   summary: RepositorySummary | null;
   commits: Commit[];
+  graph: SemanticCommitGraph | null;
 };
 
 export function useRepositoryData(org: string, name: string): RepoDataState {
@@ -16,6 +17,7 @@ export function useRepositoryData(org: string, name: string): RepoDataState {
     error: null,
     summary: null,
     commits: [],
+    graph: null,
   });
 
   useEffect(() => {
@@ -33,12 +35,16 @@ export function useRepositoryData(org: string, name: string): RepoDataState {
         }
 
         if (!cancelled) {
-          const { commits, ...summary } = data as RepositorySummary & { commits: Commit[] };
+          const { commits, graph, ...summary } = data as RepositorySummary & {
+            commits: Commit[];
+            graph?: SemanticCommitGraph;
+          };
           setState({
             loading: false,
             error: null,
             summary: summary as RepositorySummary,
             commits: commits ?? [],
+            graph: graph ?? null,
           });
         }
       } catch (err) {
@@ -48,6 +54,7 @@ export function useRepositoryData(org: string, name: string): RepoDataState {
             error: err instanceof Error ? err.message : "Failed to load repository",
             summary: null,
             commits: [],
+            graph: null,
           });
         }
       }

@@ -1,4 +1,5 @@
 import { parseRepoUrl } from "./repoUrl";
+import { localWorkspaceRepos } from "./localWorkspaceSeed";
 import type { WorkspaceRepo } from "./types";
 import { repoKey } from "./types";
 
@@ -8,16 +9,36 @@ export function loadWorkspace(): WorkspaceRepo[] {
   if (typeof window === "undefined") return [];
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
+    if (!raw) return seedLocalWorkspace();
     const parsed = JSON.parse(raw) as WorkspaceRepo[];
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? mergeSeedWorkspace(parsed) : [];
   } catch {
-    return [];
+    return seedLocalWorkspace();
   }
 }
 
 export function saveWorkspace(repos: WorkspaceRepo[]): void {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(repos));
+}
+
+function seedLocalWorkspace(): WorkspaceRepo[] {
+  if (process.env.NEXT_PUBLIC_REIN_SEED_LOCAL_WORKSPACE === "0") return [];
+  saveWorkspace(localWorkspaceRepos);
+  return localWorkspaceRepos;
+}
+
+function mergeSeedWorkspace(repos: WorkspaceRepo[]): WorkspaceRepo[] {
+  if (process.env.NEXT_PUBLIC_REIN_SEED_LOCAL_WORKSPACE === "0") return repos;
+
+  const existing = new Set(repos.map((repo) => repoKey(repo.org, repo.name)));
+  const missingSeeds = localWorkspaceRepos.filter(
+    (repo) => !existing.has(repoKey(repo.org, repo.name))
+  );
+  if (missingSeeds.length === 0) return repos;
+
+  const merged = [...missingSeeds, ...repos];
+  saveWorkspace(merged);
+  return merged;
 }
 
 export function addRepository(url: string): WorkspaceRepo {

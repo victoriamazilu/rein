@@ -21,7 +21,8 @@
     "db:migrate:repo": "node scripts/setup-db.mjs 004_add_repo.sql",
     "benchmark": "node scripts/benchmark-agentgit.mjs",
     "backboard:smoke": "node scripts/backboard-smoke.mjs",
-    "backfill": "tsx src/cli.ts backfill"
+    "backfill": "tsx src/cli.ts backfill",
+    "seed:local": "node scripts/generate-local-db.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",
