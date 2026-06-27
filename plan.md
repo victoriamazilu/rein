@@ -296,7 +296,7 @@ git status --short
 git log -5 --oneline
 ```
 
-Potentially include previous search results later, but not required for MVP.
+Potentially include previous search results later, but not required for MVP
 
 ### 3. Ask current LLM/agent for distillation
 
