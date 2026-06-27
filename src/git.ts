@@ -33,6 +33,16 @@ export function getStatusShort(cwd = process.cwd()): string {
   return execSync("git status --short", { cwd, encoding: "utf-8" }).trim();
 }
 
+export function hasUnstagedChanges(cwd = process.cwd()): boolean {
+  const status = getStatusShort(cwd);
+  if (!status) return false;
+
+  return status.split("\n").some((line) => {
+    if (line.startsWith("??")) return true;
+    return line.length >= 2 && line[1] !== " ";
+  });
+}
+
 export function getRecentCommits(cwd = process.cwd()): string {
   try {
     return execSync("git log -5 --oneline", { cwd, encoding: "utf-8" }).trim();

@@ -57,6 +57,22 @@ ${input.recentCommits || "(none)"}
 Staged diff:
 ${truncatedDiff}`;
 
+  const content = await completeJson(client, prompt);
+
+  try {
+    return parseAndValidateDistillation(content);
+  } catch (err) {
+    const repaired = await completeJson(
+      client,
+      `Repair this invalid AgentCommit distillation output.\n\nError: ${
+        err instanceof Error ? err.message : String(err)
+      }\n\nReturn only strict JSON with this exact shape:\n{\n  "commit_message": string,\n  "intent": string,\n  "reasoning_trace": string,\n  "notes_for_future_agents": string,\n  "embedding_text": string\n}\n\nInvalid output:\n${content}`
+    );
+    return parseAndValidateDistillation(repaired);
+  }
+}
+
+async function completeJson(client: OpenAI, prompt: string): Promise<string> {
   const res = await client.chat.completions.create({
     model: DEFAULT_MODEL,
     messages: [{ role: "user", content: prompt }],
@@ -66,8 +82,16 @@ ${truncatedDiff}`;
 
   const content = res.choices[0]?.message?.content;
   if (!content) throw new Error("LLM returned no content");
+  return content;
+}
 
-  return validateDistillation(JSON.parse(content));
+function parseAndValidateDistillation(content: string): DistilledAgentCommit {
+  try {
+    return validateDistillation(JSON.parse(content));
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    throw new Error(`Invalid AgentCommit distillation JSON: ${message}`);
+  }
 }
 
 function validateDistillation(value: unknown): DistilledAgentCommit {

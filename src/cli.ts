@@ -11,6 +11,7 @@ import {
   getStagedDiff,
   getStatusShort,
   hasStagedChanges,
+  hasUnstagedChanges,
   isInsideGitRepo,
 } from "./git.js";
 import { distillAgentCommit, embedText } from "./llm.js";
@@ -35,6 +36,10 @@ program
       }
 
       const status = getStatusShort();
+      if (hasUnstagedChanges()) {
+        console.warn("⚠ Unstaged changes detected. agentgit commit will only include staged changes.");
+      }
+
       const recentCommits = getRecentCommits();
       const stagedDiff = getStagedDiff();
 
