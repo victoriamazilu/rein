@@ -1,0 +1,2 @@
+export const DEFAULT_SEARCH_COUNT = 10;
+export const EMBEDDING_DIMENSIONS = 1536;

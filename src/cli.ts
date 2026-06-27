@@ -14,6 +14,7 @@ import {
   isInsideGitRepo,
 } from "./git.js";
 import { distillAgentCommit, embedText } from "./llm.js";
+import { DEFAULT_SEARCH_COUNT } from "./constants.js";
 
 const program = new Command();
 
@@ -87,7 +88,7 @@ program
   .command("search")
   .description("Hybrid semantic + keyword search over AgentCommit memory")
   .argument("<query...>", "Search query")
-  .option("-n, --count <count>", "Number of results", "10")
+  .option("-n, --count <count>", "Number of results", String(DEFAULT_SEARCH_COUNT))
   .action(async (queryParts: string[], opts: { count: string }) => {
     const query = queryParts.join(" ");
     try {
