@@ -1,12 +1,38 @@
 import "dotenv/config";
-import { execSync } from "node:child_process";
+import { readFileSync } from "node:fs";
+import process from "node:process";
+import pg from "pg";
 
-if (!process.env.DATABASE_URL) {
+const { Client } = pg;
+
+const databaseUrl = process.env.DATABASE_URL;
+
+if (!databaseUrl) {
   console.error("Missing DATABASE_URL in .env");
   process.exit(1);
 }
 
-execSync(
-  `npx supabase db query -f supabase/migrations/001_agent_commits.sql --db-url ${JSON.stringify(process.env.DATABASE_URL)}`,
-  { stdio: "inherit" }
-);
+const migrationPath = "supabase/migrations/001_agent_commits.sql";
+const sql = readFileSync(migrationPath, "utf-8");
+
+const client = new Client({
+  connectionString: databaseUrl,
+  ssl: { rejectUnauthorized: false },
+});
+
+try {
+  console.log(`Applying ${migrationPath}...`);
+  await client.connect();
+  await client.query(sql);
+  console.log("Database setup complete.");
+} catch (err) {
+  console.error("Database setup failed:");
+  if (err instanceof Error) {
+    console.error(err.message);
+  } else {
+    console.error(err);
+  }
+  process.exitCode = 1;
+} finally {
+  await client.end().catch(() => undefined);
+}
