@@ -8,6 +8,7 @@ import {
 import { distillAgentCommit, embedText } from "./llm.js";
 
 export interface BackfillOptions {
+  repo: string;
   from?: string;
   to?: string;
   max?: number;
@@ -27,7 +28,7 @@ export interface BackfillResult {
 }
 
 export async function backfillAgentCommits(
-  options: BackfillOptions = {}
+  options: BackfillOptions
 ): Promise<BackfillResult> {
   const cwd = options.cwd ?? process.cwd();
   const store = options.store ?? new AgentCommitStore(createSupabase());
@@ -51,7 +52,7 @@ export async function backfillAgentCommits(
 
     try {
       if (skipExisting) {
-        const existing = await store.getBySha(sha);
+        const existing = await store.getBySha(sha, options.repo);
         if (existing) {
           console.log(`${label} skip (already stored)`);
           result.skipped++;
@@ -76,7 +77,7 @@ export async function backfillAgentCommits(
       });
 
       if (options.dryRun) {
-        console.log(JSON.stringify({ sha, ...distilled }, null, 2));
+        console.log(JSON.stringify({ repo: options.repo, sha, ...distilled }, null, 2));
         result.stored++;
         continue;
       }
@@ -87,6 +88,7 @@ export async function backfillAgentCommits(
       console.log(`${label} storing...`);
       if (options.force) {
         await store.upsert({
+          repo: options.repo,
           sha,
           title: distilled.title,
           intent: distilled.intent,
@@ -97,6 +99,7 @@ export async function backfillAgentCommits(
         });
       } else {
         await store.create({
+          repo: options.repo,
           sha,
           title: distilled.title,
           intent: distilled.intent,

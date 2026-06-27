@@ -49,7 +49,7 @@ app.post(
     }
 
     const agentStore = new AgentCommitStore(ctx.supabaseAdmin);
-    const existing = await agentStore.getBySha(body.git_sha);
+    const existing = await agentStore.getBySha(body.git_sha, body.repo);
     if (existing) {
       return c.json(existing, 200);
     }
@@ -77,12 +77,29 @@ app.get(
 );
 
 app.get(
+  "/repos/:repo/agent_commits/by-sha/:sha",
+  withSupabase({ auth: ["publishable", "secret"] }),
+  async (c) => {
+    const ctx = c.var.supabaseContext;
+    const repo = decodeURIComponent(c.req.param("repo"));
+    const sha = c.req.param("sha");
+    const agentCommit = await store(ctx).getBySha(sha, repo);
+    if (!agentCommit) return c.json({ error: "not found" }, 404);
+    return c.json(agentCommit);
+  }
+);
+
+app.get(
   "/agent_commits/by-sha/:sha",
   withSupabase({ auth: ["publishable", "secret"] }),
   async (c) => {
     const ctx = c.var.supabaseContext;
     const sha = c.req.param("sha");
-    const agentCommit = await store(ctx).getBySha(sha);
+    const repo = c.req.query("repo");
+    if (!repo) {
+      return c.json({ error: "repo query parameter is required" }, 400);
+    }
+    const agentCommit = await store(ctx).getBySha(sha, repo);
     if (!agentCommit) return c.json({ error: "not found" }, 404);
     return c.json(agentCommit);
   }

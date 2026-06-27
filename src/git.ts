@@ -130,13 +130,21 @@ export function createGitCommit(message: string, cwd = process.cwd()): void {
 }
 
 export function getRemoteRepo(cwd = process.cwd()): string {
-  const url = git(["remote", "get-url", "origin"], cwd);
+  return getRepoId(cwd);
+}
 
-  const sshMatch = url.match(/git@github\.com:(.+?)(?:\.git)?$/);
-  if (sshMatch) return sshMatch[1];
+export function getRepoId(cwd = process.cwd()): string {
+  try {
+    const url = git(["remote", "get-url", "origin"], cwd);
 
-  const httpsMatch = url.match(/github\.com\/(.+?)(?:\.git)?$/);
-  if (httpsMatch) return httpsMatch[1];
+    const sshMatch = url.match(/git@github\.com:(.+?)(?:\.git)?$/);
+    if (sshMatch) return sshMatch[1];
 
-  return url;
+    const httpsMatch = url.match(/github\.com\/(.+?)(?:\.git)?$/);
+    if (httpsMatch) return httpsMatch[1];
+
+    return url;
+  } catch {
+    return git(["rev-parse", "--show-toplevel"], cwd);
+  }
 }

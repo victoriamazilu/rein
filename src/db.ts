@@ -2,13 +2,17 @@ import { createClient, type PostgrestError, type SupabaseClient } from "@supabas
 import type { AgentCommit, AgentCommitSearchResult } from "./types.js";
 
 const AGENT_COMMIT_FIELDS =
-  "id, sha, title, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at";
+  "id, repo, sha, title, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at";
 
 function throwDbError(error: PostgrestError): never {
-  const hint =
-    error.code === "42703" && error.message.includes("title")
-      ? " Run `npm run db:migrate:title` to add the title column."
-      : "";
+  let hint = "";
+  if (error.code === "42703") {
+    if (error.message.includes("title")) {
+      hint = " Run `npm run db:migrate:title` to add the title column.";
+    } else if (error.message.includes("repo")) {
+      hint = " Run `npm run db:migrate:repo` to add the repo column.";
+    }
+  }
   throw new Error(`${error.message}${hint}`);
 }
 
@@ -35,14 +39,15 @@ export class AgentCommitStore {
   constructor(private supabase: SupabaseClient) {}
 
   async create(input: Omit<AgentCommit, "id" | "created_at">): Promise<AgentCommit>;
-  async create(sha: string, _repo: string): Promise<AgentCommit>;
+  async create(sha: string, repo: string): Promise<AgentCommit>;
   async create(
     inputOrSha: Omit<AgentCommit, "id" | "created_at"> | string,
-    _repo?: string
+    repo?: string
   ): Promise<AgentCommit> {
     const input =
       typeof inputOrSha === "string"
         ? {
+            repo: repo ?? "unknown",
             sha: inputOrSha,
             title: "Legacy Registration",
             intent: "Legacy API registration",
@@ -66,7 +71,7 @@ export class AgentCommitStore {
   async upsert(input: Omit<AgentCommit, "id" | "created_at">): Promise<AgentCommit> {
     const { data, error } = await this.supabase
       .from("agent_commits")
-      .upsert(input, { onConflict: "sha" })
+      .upsert(input, { onConflict: "repo,sha" })
       .select()
       .single();
 
@@ -85,25 +90,23 @@ export class AgentCommitStore {
     return (data as AgentCommit | null) ?? null;
   }
 
-  async getBySha(sha: string): Promise<AgentCommit | null> {
+  async getBySha(sha: string, repo: string): Promise<AgentCommit | null> {
     const { data, error } = await this.supabase
       .from("agent_commits")
       .select(AGENT_COMMIT_FIELDS)
       .eq("sha", sha)
+      .eq("repo", repo)
       .maybeSingle();
 
     if (error) throwDbError(error);
     return (data as AgentCommit | null) ?? null;
   }
 
-  async listByRepo(_repo: string): Promise<AgentCommit[]> {
-    return this.listAll();
-  }
-
-  async listAll(): Promise<AgentCommit[]> {
+  async listByRepo(repo: string): Promise<AgentCommit[]> {
     const { data, error } = await this.supabase
       .from("agent_commits")
       .select(`${AGENT_COMMIT_FIELDS}, embedding`)
+      .eq("repo", repo)
       .order("created_at", { ascending: true });
 
     if (error) throwDbError(error);
@@ -113,12 +116,14 @@ export class AgentCommitStore {
   async search(
     queryText: string,
     queryEmbedding: number[],
+    repo: string,
     matchCount = 10
   ): Promise<AgentCommitSearchResult[]> {
     const { data, error } = await this.supabase.rpc("match_agent_commits", {
       query_text: queryText,
       query_embedding: queryEmbedding,
       match_count: matchCount,
+      filter_repo: repo,
     });
 
     if (error) throwDbError(error);

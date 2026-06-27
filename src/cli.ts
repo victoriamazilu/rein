@@ -8,6 +8,7 @@ import {
   createGitCommit,
   getHeadSha,
   getRecentCommits,
+  getRepoId,
   getStagedDiff,
   getStatusShort,
   hasStagedChanges,
@@ -30,9 +31,11 @@ program
   .command("commit")
   .description("Create a git commit and store AgentCommit semantic memory")
   .option("--dry-run", "Generate and print memory without committing")
-  .action(async (opts: { dryRun?: boolean }) => {
+  .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
+  .action(async (opts: { dryRun?: boolean; repo?: string }) => {
     try {
       assertGitRepo();
+      const repo = resolveRepo(opts.repo);
       if (!hasStagedChanges()) {
         console.error("No staged changes. Run `git add ...` first.");
         process.exit(1);
@@ -64,10 +67,11 @@ program
 
         console.log("Storing AgentCommit in Supabase...");
         const store = new AgentCommitStore(createSupabase());
-        const existing = await store.getBySha(sha);
+        const existing = await store.getBySha(sha, repo);
         const agentCommit =
           existing ??
           (await store.create({
+            repo,
             sha,
             title: distilled.title,
             intent: distilled.intent,
@@ -78,12 +82,13 @@ program
           }));
 
         console.log("\n✓ AgentGit commit complete");
+        console.log(`Repo: ${agentCommit.repo}`);
         console.log(`SHA: ${agentCommit.sha}`);
         if (agentCommit.title) console.log(`Title: ${agentCommit.title}`);
         console.log(`Intent: ${agentCommit.intent}`);
         console.log(`Notes: ${agentCommit.notes_for_future_agents}`);
       } catch (err) {
-        writePendingAgentCommit(sha, { sha, ...distilled, created_at: new Date().toISOString() });
+        writePendingAgentCommit(sha, { repo, sha, ...distilled, created_at: new Date().toISOString() });
         console.warn("\n⚠ Git commit was created, but AgentCommit storage failed.");
         console.warn(`Saved pending memory to .agentgit/pending/${sha}.json`);
         throw err;
@@ -98,7 +103,8 @@ program
   .description("Hybrid semantic + keyword search over AgentCommit memory")
   .argument("<query...>", "Search query")
   .option("-n, --count <count>", "Number of results", "10")
-  .action(async (queryParts: string[], opts: { count: string }) => {
+  .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
+  .action(async (queryParts: string[], opts: { count: string; repo?: string }) => {
     const query = queryParts.join(" ");
     try {
       const count = Number.parseInt(opts.count, 10);
@@ -106,10 +112,11 @@ program
         throw new Error("--count must be a positive number");
       }
 
-      console.log("Searching AgentCommit memory...");
+      const repo = resolveRepo(opts.repo);
+      console.log(`Searching AgentCommit memory for ${repo}...`);
       const queryEmbedding = await embedText(query);
       const store = new AgentCommitStore(createSupabase());
-      const results = await store.search(query, queryEmbedding, count);
+      const results = await store.search(query, queryEmbedding, repo, count);
 
       if (results.length === 0) {
         console.log("No matching agent_commits found.");
@@ -140,17 +147,19 @@ program
     "Minimum cosine similarity for a thick semantic link (0–1)",
     "0.78"
   )
-  .action(async (opts: { output: string; query?: string; threshold: string }) => {
+  .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
+  .action(async (opts: { output: string; query?: string; threshold: string; repo?: string }) => {
     try {
       const threshold = Number.parseFloat(opts.threshold);
       if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 1) {
         throw new Error("--threshold must be between 0 and 1");
       }
 
+      const repo = resolveRepo(opts.repo);
       const store = new AgentCommitStore(createSupabase());
-      const commits = await store.listAll();
+      const commits = await store.listByRepo(repo);
       if (commits.length === 0) {
-        console.log("No agent_commits found. Run `agentgit commit` first.");
+        console.log(`No agent_commits found for ${repo}. Run \`agentgit commit\` first.`);
         return;
       }
 
@@ -158,7 +167,7 @@ program
 
       if (opts.query) {
         const queryEmbedding = await embedText(opts.query);
-        const results = await store.search(opts.query, queryEmbedding, 5);
+        const results = await store.search(opts.query, queryEmbedding, repo, 5);
         graph = addSearchEdges(
           graph,
           results.map((result) => ({ id: result.id, combined_score: result.combined_score })),
@@ -166,7 +175,7 @@ program
         );
       }
 
-      writeGraphHtml(opts.output, graph, "AgentGit Memory Graph");
+      writeGraphHtml(opts.output, graph, `AgentGit Memory Graph — ${repo}`);
       console.log(`Wrote memory graph (${graph.nodes.length} nodes, ${graph.edges.length} edges)`);
       console.log(`Open: ${opts.output}`);
       if (opts.query) {
@@ -187,6 +196,7 @@ program
   .option("--dry-run", "Distill and print memory without storing")
   .option("--force", "Re-process commits even if already stored")
   .option("--delay-ms <ms>", "Pause between commits (rate limiting)", "0")
+  .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (opts: {
     from?: string;
     to?: string;
@@ -194,9 +204,11 @@ program
     dryRun?: boolean;
     force?: boolean;
     delayMs: string;
+    repo?: string;
   }) => {
     try {
       assertGitRepo();
+      const repo = resolveRepo(opts.repo);
 
       const max = opts.max ? Number.parseInt(opts.max, 10) : undefined;
       if (opts.max && (!Number.isFinite(max!) || max! <= 0)) {
@@ -209,6 +221,7 @@ program
       }
 
       const result = await backfillAgentCommits({
+        repo,
         from: opts.from,
         to: opts.to,
         max,
@@ -233,14 +246,16 @@ program
   .command("show")
   .description("Show AgentCommit metadata for a git commit ref")
   .argument("[ref]", "Git commit ref, SHA, or short SHA", "HEAD")
-  .action(async (ref: string) => {
+  .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
+  .action(async (ref: string, opts: { repo?: string }) => {
     try {
+      const repo = resolveRepo(opts.repo);
       const sha = isInsideGitRepo() ? resolveCommitSha(ref) : ref;
       const store = new AgentCommitStore(createSupabase());
-      const agentCommit = await store.getBySha(sha);
+      const agentCommit = await store.getBySha(sha, repo);
 
       if (!agentCommit) {
-        console.error(`No AgentCommit found for ${ref} (${sha})`);
+        console.error(`No AgentCommit found for ${ref} (${sha}) in ${repo}`);
         process.exit(1);
       }
 
@@ -255,6 +270,12 @@ program.parse();
 
 function assertGitRepo(): void {
   if (!isInsideGitRepo()) throw new Error("Not inside a git repository");
+}
+
+function resolveRepo(explicit?: string): string {
+  if (explicit?.trim()) return explicit.trim();
+  assertGitRepo();
+  return getRepoId();
 }
 
 async function handleCommitError(err: unknown): Promise<void> {
@@ -281,6 +302,7 @@ function errorMessage(err: unknown): string {
 }
 
 function printAgentCommit(agentCommit: {
+  repo?: string;
   sha: string;
   title?: string | null;
   intent: string;
@@ -290,6 +312,7 @@ function printAgentCommit(agentCommit: {
   created_at?: string;
 }): void {
   console.log(`Commit: ${agentCommit.sha}`);
+  if (agentCommit.repo) console.log(`Repo: ${agentCommit.repo}`);
   if (agentCommit.created_at) console.log(`Created: ${agentCommit.created_at}`);
   if (agentCommit.title) console.log(`Title: ${agentCommit.title}`);
   console.log("");

@@ -1,5 +1,6 @@
 export interface AgentCommit {
   id: string;
+  repo: string;
   sha: string;
   title?: string | null;
   intent: string;

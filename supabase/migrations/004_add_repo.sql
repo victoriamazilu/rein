@@ -1,27 +1,26 @@
--- Add short LLM-generated titles for graph labels and search.
+-- Multi-repo support: scope agent_commits by repository.
 
 alter table public.agent_commits
-add column if not exists title text;
+add column if not exists repo text;
+
+update public.agent_commits
+set repo = 'legacy/unknown'
+where repo is null;
 
 alter table public.agent_commits
-drop column if exists search_vector;
+alter column repo set not null;
 
 alter table public.agent_commits
-add column search_vector tsvector generated always as (
-  to_tsvector(
-    'english',
-    coalesce(title, '') || ' ' ||
-    coalesce(intent, '') || ' ' ||
-    coalesce(reasoning_trace, '') || ' ' ||
-    coalesce(notes_for_future_agents, '') || ' ' ||
-    coalesce(embedding_text, '')
-  )
-) stored;
+drop constraint if exists agent_commits_sha_key;
 
-create index if not exists agent_commits_search_idx
-on public.agent_commits using gin(search_vector);
+create unique index if not exists agent_commits_repo_sha_key
+on public.agent_commits (repo, sha);
+
+create index if not exists agent_commits_repo_idx
+on public.agent_commits (repo);
 
 drop function if exists public.match_agent_commits(vector, text, int);
+drop function if exists public.match_agent_commits(vector, text, int, text);
 
 create or replace function public.match_agent_commits(
   query_embedding vector(1536),
@@ -81,3 +80,6 @@ as $$
   order by combined_score desc
   limit match_count;
 $$;
+
+-- Single-repo installs with existing rows: set your repo slug, then re-run backfill if needed.
+-- update public.agent_commits set repo = 'you/rein' where repo = 'legacy/unknown';

@@ -11,7 +11,8 @@ drop table if exists public.agent_commits cascade;
 
 create table public.agent_commits (
   id uuid primary key default gen_random_uuid(),
-  sha text not null unique,
+  repo text not null,
+  sha text not null,
 
   intent text not null,
   reasoning_trace text not null,
@@ -20,8 +21,13 @@ create table public.agent_commits (
 
   embedding vector(1536),
 
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+
+  unique (repo, sha)
 );
+
+create index if not exists agent_commits_repo_idx
+on public.agent_commits (repo);
 
 alter table public.agent_commits
 add column if not exists search_vector tsvector generated always as (
@@ -44,10 +50,12 @@ using ivfflat (embedding vector_cosine_ops);
 create or replace function public.match_agent_commits(
   query_embedding vector(1536),
   query_text text,
-  match_count int default 10
+  match_count int default 10,
+  filter_repo text default null
 )
 returns table (
   id uuid,
+  repo text,
   sha text,
   intent text,
   reasoning_trace text,
@@ -71,6 +79,7 @@ as $$
       1 - (ac.embedding <=> query_embedding) as vector_similarity
     from public.agent_commits ac, params p
     where ac.embedding is not null
+      and (filter_repo is null or ac.repo = filter_repo)
     order by ac.embedding <=> query_embedding
     limit (select candidate_count from params)
   ),
@@ -81,6 +90,7 @@ as $$
       ts_rank_cd(ac.search_vector, p.ts_query) as keyword_rank
     from public.agent_commits ac, params p
     where ac.search_vector @@ p.ts_query
+      and (filter_repo is null or ac.repo = filter_repo)
     order by keyword_rank desc
     limit (select candidate_count from params)
   ),
@@ -93,6 +103,7 @@ as $$
 
   select
     ac.id,
+    ac.repo,
     ac.sha,
     ac.intent,
     ac.reasoning_trace,
