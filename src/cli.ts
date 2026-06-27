@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import "dotenv/config";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { Command } from "commander";
 import { AgentCommitStore, createSupabase } from "./db.js";
@@ -140,6 +140,28 @@ program
       printError(err);
       process.exit(1);
     }
+  });
+
+program
+  .command("sync")
+  .description("Upload pending AgentCommit files from .agentgit/pending/")
+  .action(async () => {
+    const dir = join(process.cwd(), ".agentgit", "pending");
+    let pending: string[];
+    try {
+      pending = readdirSync(dir).filter((f) => f.endsWith(".json"));
+    } catch {
+      console.log("No pending AgentCommits to sync.");
+      return;
+    }
+
+    if (pending.length === 0) {
+      console.log("No pending AgentCommits to sync.");
+      return;
+    }
+
+    console.log(`Found ${pending.length} pending file(s): ${pending.join(", ")}`);
+    console.log("Full sync not implemented yet — run agentgit commit again or insert manually.");
   });
 
 program.parse();
