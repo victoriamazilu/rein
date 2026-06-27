@@ -13,8 +13,9 @@ import {
   hasStagedChanges,
   isInsideGitRepo,
 } from "./git.js";
+import { addSearchEdges, buildMemoryGraph, writeGraphHtml } from "./graph.js";
 import { distillAgentCommit, embedText } from "./llm.js";
-import { DEFAULT_SEARCH_COUNT } from "./constants.js";
+import { DEFAULT_SEARCH_COUNT, clampSearchCount } from "./constants.js";
 
 const program = new Command();
 
@@ -92,7 +93,7 @@ program
   .action(async (queryParts: string[], opts: { count: string }) => {
     const query = queryParts.join(" ");
     try {
-      const count = Number.parseInt(opts.count, 10);
+      const count = clampSearchCount(Number.parseInt(opts.count, 10));
       console.log("Searching AgentCommit memory...");
       const queryEmbedding = await embedText(query);
       const store = new AgentCommitStore(createSupabase());
@@ -107,10 +108,57 @@ program
       results.forEach((result, index) => {
         console.log(`${index + 1}. ${shortSha(result.sha)} — ${result.intent}`);
         console.log(`   SHA: ${result.sha}`);
-        console.log(`   Score: ${result.combined_score?.toFixed?.(4) ?? result.combined_score}`);
+        console.log(`   Score: ${result.combined_score?.toFixed?.(4) ?? result.combined_score} | vector ${result.vector_similarity?.toFixed?.(4) ?? result.vector_similarity} | keyword ${result.keyword_rank?.toFixed?.(4) ?? result.keyword_rank}`);
         console.log(`   Notes: ${result.notes_for_future_agents}`);
         console.log("");
       });
+    } catch (err) {
+      printError(err);
+      process.exit(1);
+    }
+  });
+
+program
+  .command("graph")
+  .description("Generate an interactive HTML graph of AgentCommit memory connections")
+  .option("-o, --output <path>", "Output HTML path", ".agentgit/memory-graph.html")
+  .option("-q, --query <query>", "Highlight search results for a query (simulates agent lookup)")
+  .option(
+    "--threshold <similarity>",
+    "Minimum cosine similarity for a thick semantic link (0–1)",
+    "0.85"
+  )
+  .action(async (opts: { output: string; query?: string; threshold: string }) => {
+    try {
+      const threshold = Number.parseFloat(opts.threshold);
+      if (!Number.isFinite(threshold) || threshold <= 0 || threshold > 1) {
+        throw new Error("--threshold must be between 0 and 1");
+      }
+
+      const store = new AgentCommitStore(createSupabase());
+      const commits = await store.listAll();
+      if (commits.length === 0) {
+        console.log("No AgentCommits found. Run `agentgit commit` first.");
+        return;
+      }
+
+      let graph = buildMemoryGraph(commits, { similarityThreshold: threshold });
+
+      if (opts.query) {
+        const queryEmbedding = await embedText(opts.query);
+        const results = await store.search(opts.query, queryEmbedding, 5);
+        graph = addSearchEdges(
+          graph,
+          results.map((result) => ({ id: result.id, combined_score: result.combined_score }))
+        );
+      }
+
+      writeGraphHtml(opts.output, graph, "AgentGit Memory Graph");
+      console.log(`Wrote memory graph (${graph.nodes.length} nodes, ${graph.edges.length} edges)`);
+      console.log(`Open: ${opts.output}`);
+      if (opts.query) {
+        console.log(`Search overlay: "${opts.query}"`);
+      }
     } catch (err) {
       printError(err);
       process.exit(1);
