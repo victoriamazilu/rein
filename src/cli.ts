@@ -13,6 +13,7 @@ import {
   hasStagedChanges,
   hasUnstagedChanges,
   isInsideGitRepo,
+  resolveCommitSha,
 } from "./git.js";
 import { distillAgentCommit, embedText } from "./llm.js";
 
@@ -127,23 +128,20 @@ program
 
 program
   .command("show")
-  .description("Show AgentCommit metadata for a git SHA")
-  .argument("<sha>", "Git commit SHA")
-  .action(async (sha: string) => {
+  .description("Show AgentCommit metadata for a git commit ref")
+  .argument("[ref]", "Git commit ref, SHA, or short SHA", "HEAD")
+  .action(async (ref: string) => {
     try {
+      const sha = isInsideGitRepo() ? resolveCommitSha(ref) : ref;
       const store = new AgentCommitStore(createSupabase());
       const agentCommit = await store.getBySha(sha);
 
       if (!agentCommit) {
-        console.error(`No AgentCommit found for ${sha}`);
+        console.error(`No AgentCommit found for ${ref} (${sha})`);
         process.exit(1);
       }
 
-      console.log(`Commit: ${agentCommit.sha}\n`);
-      console.log(`Intent:\n${agentCommit.intent}\n`);
-      console.log(`Reasoning Trace:\n${agentCommit.reasoning_trace}\n`);
-      console.log(`Notes for Future Agents:\n${agentCommit.notes_for_future_agents}\n`);
-      console.log(`Embedding Text:\n${agentCommit.embedding_text}`);
+      printAgentCommit(agentCommit);
     } catch (err) {
       printError(err);
       process.exit(1);
@@ -177,6 +175,23 @@ function errorMessage(err: unknown): string {
     }
   }
   return String(err);
+}
+
+function printAgentCommit(agentCommit: {
+  sha: string;
+  intent: string;
+  reasoning_trace: string;
+  notes_for_future_agents: string;
+  embedding_text: string;
+  created_at?: string;
+}): void {
+  console.log(`Commit: ${agentCommit.sha}`);
+  if (agentCommit.created_at) console.log(`Created: ${agentCommit.created_at}`);
+  console.log("");
+  console.log(`Intent:\n${agentCommit.intent}\n`);
+  console.log(`Reasoning Trace:\n${agentCommit.reasoning_trace}\n`);
+  console.log(`Notes for Future Agents:\n${agentCommit.notes_for_future_agents}\n`);
+  console.log(`Embedding Text:\n${agentCommit.embedding_text}`);
 }
 
 function shortSha(sha: string): string {

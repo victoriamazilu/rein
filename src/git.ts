@@ -16,6 +16,10 @@ export function getHeadSha(cwd = process.cwd()): string {
   return git(["rev-parse", "HEAD"], cwd);
 }
 
+export function resolveCommitSha(ref: string, cwd = process.cwd()): string {
+  return git(["rev-parse", "--verify", `${ref}^{commit}`], cwd);
+}
+
 export function getStagedDiff(cwd = process.cwd()): string {
   return execSync("git diff --cached", { cwd, encoding: "utf-8", maxBuffer: 20 * 1024 * 1024 }).trim();
 }
