@@ -92,6 +92,10 @@ program
     const query = queryParts.join(" ");
     try {
       const count = Number.parseInt(opts.count, 10);
+      if (!Number.isFinite(count) || count <= 0) {
+        throw new Error("--count must be a positive number");
+      }
+
       console.log("Searching AgentCommit memory...");
       const queryEmbedding = await embedText(query);
       const store = new AgentCommitStore(createSupabase());
@@ -106,7 +110,7 @@ program
       results.forEach((result, index) => {
         console.log(`${index + 1}. ${shortSha(result.sha)} — ${result.intent}`);
         console.log(`   SHA: ${result.sha}`);
-        console.log(`   Score: ${result.combined_score?.toFixed?.(4) ?? result.combined_score}`);
+        console.log(`   Score: ${formatScore(result.combined_score)} | vector ${formatScore(result.vector_similarity)} | keyword ${formatScore(result.keyword_rank)}`);
         console.log(`   Notes: ${result.notes_for_future_agents}`);
         console.log("");
       });
@@ -172,6 +176,10 @@ function errorMessage(err: unknown): string {
 
 function shortSha(sha: string): string {
   return sha.slice(0, 7);
+}
+
+function formatScore(score: number): string {
+  return Number.isFinite(score) ? score.toFixed(4) : String(score);
 }
 
 export function writePendingAgentCommit(sha: string, value: unknown): void {

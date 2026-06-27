@@ -59,6 +59,38 @@ returns table (
 )
 language sql stable
 as $$
+  with params as (
+    select
+      plainto_tsquery('english', query_text) as ts_query,
+      greatest(match_count * 4, 20) as candidate_count
+  ),
+
+  vector_candidates as (
+    select
+      ac.id,
+      1 - (ac.embedding <=> query_embedding) as vector_similarity
+    from public.agent_commits ac, params p
+    where ac.embedding is not null
+    order by ac.embedding <=> query_embedding
+    limit (select candidate_count from params)
+  ),
+
+  keyword_candidates as (
+    select
+      ac.id,
+      ts_rank_cd(ac.search_vector, p.ts_query) as keyword_rank
+    from public.agent_commits ac, params p
+    where ac.search_vector @@ p.ts_query
+    order by keyword_rank desc
+    limit (select candidate_count from params)
+  ),
+
+  candidates as (
+    select id from vector_candidates
+    union
+    select id from keyword_candidates
+  )
+
   select
     ac.id,
     ac.sha,
@@ -67,23 +99,18 @@ as $$
     ac.notes_for_future_agents,
     ac.embedding_text,
 
-    1 - (ac.embedding <=> query_embedding) as vector_similarity,
-
-    ts_rank_cd(
-      ac.search_vector,
-      plainto_tsquery('english', query_text)
-    ) as keyword_rank,
+    coalesce(vc.vector_similarity, 0) as vector_similarity,
+    coalesce(kc.keyword_rank, 0) as keyword_rank,
 
     (
-      0.65 * (1 - (ac.embedding <=> query_embedding)) +
-      0.35 * ts_rank_cd(ac.search_vector, plainto_tsquery('english', query_text))
+      0.65 * coalesce(vc.vector_similarity, 0) +
+      0.35 * coalesce(kc.keyword_rank / nullif(kc.keyword_rank + 1, 0), 0)
     ) as combined_score
 
-  from public.agent_commits ac
-  where
-    ac.search_vector @@ plainto_tsquery('english', query_text)
-    or ac.embedding is not null
-
+  from candidates c
+  join public.agent_commits ac on ac.id = c.id
+  left join vector_candidates vc on vc.id = c.id
+  left join keyword_candidates kc on kc.id = c.id
   order by combined_score desc
   limit match_count;
 $$;

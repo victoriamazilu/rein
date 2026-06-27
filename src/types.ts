@@ -16,3 +16,9 @@ export interface DistilledAgentCommit {
   notes_for_future_agents: string;
   embedding_text: string;
 }
+
+export interface AgentCommitSearchResult extends AgentCommit {
+  vector_similarity: number;
+  keyword_rank: number;
+  combined_score: number;
+}

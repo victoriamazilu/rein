@@ -1,5 +1,5 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { AgentCommit } from "./types.js";
+import type { AgentCommit, AgentCommitSearchResult } from "./types.js";
 
 export function createSupabase(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
@@ -87,7 +87,7 @@ export class AgentCommitStore {
     queryText: string,
     queryEmbedding: number[],
     matchCount = 10
-  ): Promise<Array<AgentCommit & { vector_similarity: number; keyword_rank: number; combined_score: number }>> {
+  ): Promise<AgentCommitSearchResult[]> {
     const { data, error } = await this.supabase.rpc("match_agent_commits", {
       query_text: queryText,
       query_embedding: queryEmbedding,
@@ -95,6 +95,6 @@ export class AgentCommitStore {
     });
 
     if (error) throw error;
-    return (data ?? []) as Array<AgentCommit & { vector_similarity: number; keyword_rank: number; combined_score: number }>;
+    return (data ?? []) as AgentCommitSearchResult[];
   }
 }
