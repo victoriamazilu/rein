@@ -50,7 +50,6 @@ export function AppShell({ children }: { children: ReactNode }) {
                         <span>
                           {repo.org}/<strong>{repo.name}</strong>
                         </span>
-                        <span className="muted mono">{repo.url}</span>
                       </Link>
                     ))
                   ) : (

@@ -8,16 +8,6 @@ export type AgentMemory = {
   confidence?: number;
   modules?: string[];
   owner?: string;
-  related?: Array<{
-    sha: string;
-    title: string;
-    similarity: number;
-  }>;
-  similarCommits?: Array<{
-    sha: string;
-    title: string;
-    similarity: number;
-  }>;
 };
 
 export type Commit = {
@@ -46,31 +36,6 @@ export type Commit = {
   memory?: AgentMemory;
 };
 
-export type SemanticGraphNode = {
-  id: string;
-  sha: string;
-  title: string;
-  intent: string;
-  message: string;
-  author: string;
-  timestamp: string;
-  topic: string;
-  x: number;
-  y: number;
-};
-
-export type SemanticGraphEdge = {
-  from: string;
-  to: string;
-  weight: number;
-};
-
-export type SemanticCommitGraph = {
-  nodes: SemanticGraphNode[];
-  edges: SemanticGraphEdge[];
-  threshold: number;
-};
-
 export type WorkspaceRepo = {
   url: string;
   org: string;
@@ -85,14 +50,11 @@ export type RepositorySummary = {
   defaultBranch: string;
   commitCount: number;
   memoryCount: number;
-  embeddingCount?: number;
-  semanticEdgeCount?: number;
 };
 
 export type RepositoryView = WorkspaceRepo &
   RepositorySummary & {
     commits: Commit[];
-    graph?: SemanticCommitGraph;
   };
 
 export type OrganizationView = {

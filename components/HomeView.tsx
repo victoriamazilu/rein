@@ -174,7 +174,7 @@ export function HomeView() {
           <span className="sr-only">Find a repository</span>
           <input
             type="search"
-            placeholder="Find a repository..."
+            placeholder="Find repository"
             value={repoQuery}
             onChange={(event) => setRepoQuery(event.target.value)}
           />
@@ -196,7 +196,7 @@ export function HomeView() {
         ) : (
           <div className="home-sidebar-empty">
             <p>No repositories yet.</p>
-            <p className="muted">Add a GitHub URL or owner/repo shorthand to begin.</p>
+            <p className="muted">Add a URL or owner/repo.</p>
           </div>
         )}
 
@@ -231,7 +231,7 @@ export function HomeView() {
                   type="text"
                   value={askQuery}
                   onChange={(event) => setAskQuery(event.target.value)}
-                  placeholder="Ask about coverage, releases, evaluations, search, or backfill"
+                  placeholder="Ask about coverage, releases, or backfill"
                 />
               </label>
               {answer ? <p className="ask-answer">{answer}</p> : null}
@@ -266,10 +266,7 @@ export function HomeView() {
           <div className="section-heading-row">
             <div>
               <h2>Trending repositories</h2>
-              <p className="muted">
-                Popular developer projects and <span className="font-editorial">agent-friendly</span>{" "}
-                workflows.
-              </p>
+              <p className="muted">High-signal repos by activity and memory.</p>
             </div>
             <button
               type="button"
@@ -298,7 +295,6 @@ export function HomeView() {
                       {repo.org}/{repo.name}
                     </Link>
                   </h3>
-                  <p>{repo.data?.description ?? repo.url}</p>
                   <div className="repo-list-meta">
                     <LanguageDot language={repo.data?.language ?? "—"} />
                     <span className="muted">{repo.data?.commitCount ?? 0} commits</span>
@@ -342,7 +338,7 @@ export function HomeView() {
                   <span className="muted">
                     {repo.data
                       ? `${repo.data.language} · ${repo.data.commitCount} commits · ${repo.data.memoryCount} memories`
-                      : repo.url}
+                      : "Loading metadata"}
                   </span>
                 </li>
               ))}
@@ -350,10 +346,7 @@ export function HomeView() {
           ) : (
             <div className="empty-panel">
               <p>No repositories yet.</p>
-              <p className="muted">
-                Paste a clone URL like <code>https://github.com/you/project.git</code> or{" "}
-                <code>you/project</code>.
-              </p>
+              <p className="muted">Paste a GitHub URL or owner/repo.</p>
             </div>
           )}
         </section>
@@ -362,10 +355,8 @@ export function HomeView() {
       <aside className="home-right-rail" aria-label="Updates">
         <section className="promo-card">
           <span className="badge badge-public">New</span>
-          <h2>
-            Agent memory for <span className="font-editorial">every commit</span>
-          </h2>
-          <p>Search decisions, intent, and implementation notes before the next agent starts.</p>
+          <h2>Commit memory</h2>
+          <p>Decisions, intent, and notes for the next agent.</p>
           <AddRepositoryButton label="Connect a repo" />
         </section>
 

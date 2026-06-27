@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { UI_GRAPH_THRESHOLD } from "@/lib/agentGraph";
+import { UI_GRAPH_THRESHOLD } from "@/lib/graphConfig";
 
 type MemoryGraphPanelProps = {
   org: string;

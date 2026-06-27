@@ -13,23 +13,18 @@ import { listWorkspaceReposForOrg } from "@/lib/workspace";
 function RepoListItem({
   repo,
   summary,
-  loading,
 }: {
   repo: WorkspaceRepo;
   summary: RepositorySummary | null;
-  loading: boolean;
 }) {
   return (
     <li>
-      <Link className="repo-list-item" href={repoPath(repo.org, repo.name)}>
+      <article className="repo-list-item">
         <div className="repo-list-primary">
-          <span className="repo-list-name">
+          <Link className="repo-list-name" href={repoPath(repo.org, repo.name)}>
             {repo.org}/<strong>{repo.name}</strong>
-          </span>
+          </Link>
         </div>
-        <p className="repo-list-description">
-          {loading ? "Loading from GitHub…" : (summary?.description ?? repo.url)}
-        </p>
         <div className="repo-list-meta">
           {summary ? (
             <>
@@ -39,10 +34,10 @@ function RepoListItem({
               <span className="muted">Updated {summary.lastUpdatedLabel}</span>
             </>
           ) : (
-            <span className="muted mono">{repo.url}</span>
+            <span className="muted">Loading metadata</span>
           )}
         </div>
-      </Link>
+      </article>
     </li>
   );
 }
@@ -52,27 +47,18 @@ export function OrgView({ orgSlug }: { orgSlug: string }) {
   const workspaceRepos = ready ? listWorkspaceReposForOrg(repos, orgSlug) : [];
   const repoKeys = workspaceRepos.map((repo) => repoKey(repo.org, repo.name)).join("|");
   const [summaries, setSummaries] = useState<Map<string, RepositorySummary>>(new Map());
-  const [loadingKeys, setLoadingKeys] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!ready || workspaceRepos.length === 0) return;
 
     for (const repo of workspaceRepos) {
       const key = repoKey(repo.org, repo.name);
-      setLoadingKeys((prev) => new Set(prev).add(key));
 
       fetch(`/api/repos/${encodeURIComponent(repo.org)}/${encodeURIComponent(repo.name)}?summary=1`)
         .then((res) => res.json())
         .then((data) => {
           if (data.error) return;
           setSummaries((prev) => new Map(prev).set(key, data as RepositorySummary));
-        })
-        .finally(() => {
-          setLoadingKeys((prev) => {
-            const next = new Set(prev);
-            next.delete(key);
-            return next;
-          });
         });
     }
   }, [ready, repoKeys]);
@@ -95,7 +81,7 @@ export function OrgView({ orgSlug }: { orgSlug: string }) {
             {orgSlug}
           </span>
         }
-        description="Repositories in your workspace — stats from GitHub and agent_commits."
+        description="Workspace repositories with GitHub stats and AgentGit memory."
         meta={
           <>
             <StatPill label="repositories" value={workspaceRepos.length} />
@@ -117,7 +103,6 @@ export function OrgView({ orgSlug }: { orgSlug: string }) {
                 key={key}
                 repo={repo}
                 summary={summaries.get(key) ?? null}
-                loading={loadingKeys.has(key) && !summaries.has(key)}
               />
             );
           })}

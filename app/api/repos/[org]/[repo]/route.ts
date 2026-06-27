@@ -19,7 +19,6 @@ export async function GET(request: Request, { params }: RouteParams) {
     return NextResponse.json({
       ...data.summary,
       commits: data.commits,
-      graph: data.graph,
     });
   } catch (err) {
     if (err instanceof GitHubError) {

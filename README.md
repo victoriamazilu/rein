@@ -145,7 +145,7 @@ LOCAL_SEED_MAX_COMMITS=75 npm run seed:local
 `LOCAL_SEED_MAX_COMMITS` is clamped between 75 and 100 commits per repository.
 The default is 90, which keeps the fixture lightweight while preserving branches,
 PR/issue references, releases, affected files, semantic embeddings, risk scores,
-and graph relationships for every commit.
+and agent memory metadata for every commit.
 
 Useful options:
 

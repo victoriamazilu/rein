@@ -146,7 +146,7 @@
         },
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
           "score": 0.181237736943
         },
         {
@@ -174,7 +174,7 @@
         },
         {
           "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
-          "title": "Enhance search functionality and add memory graph generation",
+          "title": "Enhance search functionality and improve memory retrieval",
           "score": 0.2
         },
         {
@@ -214,7 +214,7 @@
         },
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
           "score": 0.212021927950383
         },
         {
@@ -232,7 +232,7 @@
       "gitKeywordResults": [
         {
           "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
-          "title": "Enhance search functionality and add memory graph generation",
+          "title": "Enhance search functionality and improve memory retrieval",
           "score": 0.16666666666666666
         },
         {
@@ -249,8 +249,8 @@
       "gitKeywordMs": 0.23612500000035652
     },
     {
-      "query": "How can I visualize memory connections between commits?",
-      "why": "A user wants the graph view for related memories.",
+      "query": "How do we backfill AgentGit memory from old git history?",
+      "why": "A maintainer wants to create memories for commits that happened before AgentGit was installed.",
       "relevant": [
         "e385432",
         "5a45bf5"
@@ -258,7 +258,7 @@
       "agentGitResults": [
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
           "score": 0.381734374357787
         },
         {
@@ -278,7 +278,7 @@
         },
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "title": "Enhance agent commit structure with a title for clearer search results.",
           "score": 0.296003215541577
         }
       ],
@@ -296,12 +296,12 @@
         },
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Add title field to agent commits for better graph labeling",
+          "title": "Add title field to agent commits for clearer search results",
           "score": 0.2
         },
         {
           "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
-          "title": "Enhance search functionality and add memory graph generation",
+          "title": "Enhance search functionality and improve memory retrieval",
           "score": 0.2
         },
         {
@@ -356,7 +356,7 @@
       "gitKeywordResults": [
         {
           "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
-          "title": "Enhance search functionality and add memory graph generation",
+          "title": "Enhance search functionality and improve memory retrieval",
           "score": 0.14285714285714285
         },
         {
@@ -406,7 +406,7 @@
         },
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "title": "Enhance agent commit structure with a title for clearer search results.",
           "score": 0.296099119874242
         }
       ],
@@ -525,7 +525,7 @@
         },
         {
           "sha": "5a45bf5b71c1e1be5df518f550fc5bcaf75c05d6",
-          "title": "Enhance search functionality and add memory graph generation",
+          "title": "Enhance search functionality and improve memory retrieval",
           "score": 0.16666666666666666
         },
         {
@@ -615,20 +615,20 @@
       "gitKeywordMs": 0.18387499999971624
     },
     {
-      "query": "Why do agent commits have titles for graph labels?",
-      "why": "A developer wants to understand the graph labeling design.",
+      "query": "Why do agent commits have short titles?",
+      "why": "A developer wants to understand concise memory labels in search results.",
       "relevant": [
         "837737d"
       ],
       "agentGitResults": [
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Enhance agent commit structure with a title for improved graph representation.",
+          "title": "Enhance agent commit structure with a title for clearer search results.",
           "score": 0.518320342390942
         },
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "To enhance the agent's ability to visualize and interact with memory connections through an embedding graph.",
+          "title": "To enable the backfilling of agent commits from existing git history into the database.",
           "score": 0.365618061124761
         },
         {
@@ -651,7 +651,7 @@
       "gitKeywordResults": [
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Add title field to agent commits for better graph labeling",
+          "title": "Add title field to agent commits for clearer search results",
           "score": 0.5
         },
         {
@@ -666,7 +666,7 @@
         },
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "Add agent view for embedding graph",
+          "title": "Add agent view for memory search",
           "score": 0.3333333333333333
         },
         {
@@ -729,7 +729,7 @@
         },
         {
           "sha": "837737d5e5800e497a8056919a844f8eb19f216f",
-          "title": "Add title field to agent commits for better graph labeling",
+          "title": "Add title field to agent commits for clearer search results",
           "score": 0.4
         },
         {
@@ -739,7 +739,7 @@
         },
         {
           "sha": "e385432395a9531f5856ff295991ff3f1194afdd",
-          "title": "Add agent view for embedding graph",
+          "title": "Add agent view for memory search",
           "score": 0.2
         }
       ],

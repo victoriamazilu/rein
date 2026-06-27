@@ -52,7 +52,7 @@ export function AddRepositoryDialog({ open, onClose, defaultOrg }: AddRepository
       >
         <div className="dialog-header">
           <h2 id="add-repo-title">Add repository</h2>
-          <p className="muted">Paste a clone URL or owner/repo — like <code>git clone</code>.</p>
+          <p className="muted">Paste a clone URL or owner/repo.</p>
         </div>
 
         <form className="dialog-form" onSubmit={handleSubmit}>
@@ -67,10 +67,7 @@ export function AddRepositoryDialog({ open, onClose, defaultOrg }: AddRepository
               required
             />
           </label>
-          <p className="field-hint">
-            Examples: <code>you/project</code>,{" "}
-            <code>git@github.com:you/project.git</code>
-          </p>
+          <p className="field-hint">Examples: <code>you/project</code>, <code>git@github.com:you/project.git</code></p>
 
           {error ? <p className="form-error">{error}</p> : null}
 

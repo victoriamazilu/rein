@@ -43,7 +43,7 @@ Return strict JSON with this exact shape:
 
 Guidelines:
 - Be concise but useful.
-- title: short memory note name for graph UI — 2-5 words, Title Case, no trailing period (e.g. "Search Tips Doc", "Memory Graph View", "DB Setup Fix").
+- title: short memory note name — 2-5 words, Title Case, no trailing period (e.g. "Search Tips Doc", "CLI Commit Flow", "DB Setup Fix").
 - Focus on decisions, intent, and future implications.
 - Do not describe obvious line-by-line changes.
 - Do not include generic advice.

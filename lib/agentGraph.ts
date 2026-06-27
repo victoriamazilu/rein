@@ -4,6 +4,9 @@ import {
   renderGraphHtml,
 } from "../src/graphCore";
 import type { AgentCommit } from "../src/types";
+import { UI_GRAPH_THRESHOLD } from "./graphConfig";
+import { isLocalSeedRepo } from "./localSeedRepos";
+import { listLocalAgentCommitsForGraph } from "./localRepositoryDb";
 import { createSupabaseAdmin } from "./supabase";
 import { repoKey } from "./types";
 
@@ -16,16 +19,9 @@ export type GraphGenerationResult = {
 };
 
 export { DEFAULT_SEMANTIC_THRESHOLD };
+export { UI_GRAPH_THRESHOLD };
 
-/** Semantic link threshold used by the web UI memory graph. */
-export const UI_GRAPH_THRESHOLD = 0.65;
-
-export async function generateRepositoryGraphHtml(
-  org: string,
-  name: string,
-  threshold = DEFAULT_SEMANTIC_THRESHOLD
-): Promise<GraphGenerationResult> {
-  const repoId = repoKey(org, name);
+async function listRemoteAgentCommits(repoId: string): Promise<AgentCommit[]> {
   const supabase = createSupabaseAdmin();
 
   const { data, error } = await supabase
@@ -37,8 +33,32 @@ export async function generateRepositoryGraphHtml(
     .order("created_at", { ascending: true });
 
   if (error) throw new Error(error.message);
+  return (data ?? []) as AgentCommit[];
+}
 
-  const commits = (data ?? []) as AgentCommit[];
+async function listGraphCommits(org: string, name: string): Promise<AgentCommit[]> {
+  const source = process.env.REIN_REPOSITORY_DATA_SOURCE ?? "auto";
+  const repoId = repoKey(org, name);
+
+  if (source === "local") {
+    return listLocalAgentCommitsForGraph(org, name);
+  }
+
+  if (source === "auto" && isLocalSeedRepo(org, name)) {
+    const localCommits = await listLocalAgentCommitsForGraph(org, name);
+    if (localCommits.length > 0) return localCommits;
+  }
+
+  return listRemoteAgentCommits(repoId);
+}
+
+export async function generateRepositoryGraphHtml(
+  org: string,
+  name: string,
+  threshold = DEFAULT_SEMANTIC_THRESHOLD
+): Promise<GraphGenerationResult> {
+  const repoId = repoKey(org, name);
+  const commits = await listGraphCommits(org, name);
   if (commits.length === 0) {
     throw new Error(
       `No agent_commits for ${repoId}. Clone locally and run \`rein backfill --repo ${repoId}\`.`

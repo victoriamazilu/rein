@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { CompactText } from "@/components/CompactText";
 
 type Crumb = {
   label: string;
@@ -29,7 +30,7 @@ export function PageHeader({
 }: {
   breadcrumbs?: Crumb[];
   title: ReactNode;
-  description?: string;
+  description?: ReactNode;
   meta?: ReactNode;
   actions?: ReactNode;
 }) {
@@ -39,7 +40,11 @@ export function PageHeader({
       <div className="page-header-main">
         <div>
           <h1>{title}</h1>
-          {description ? <p className="page-description">{description}</p> : null}
+          {typeof description === "string" ? (
+            <CompactText className="page-description" text={description} maxLength={150} />
+          ) : description ? (
+            <div className="page-description">{description}</div>
+          ) : null}
           {meta ? <div className="page-meta">{meta}</div> : null}
         </div>
         {actions ? <div className="page-actions">{actions}</div> : null}

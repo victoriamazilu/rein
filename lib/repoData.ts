@@ -8,7 +8,7 @@ import {
 import { loadLocalRepositoryData } from "./localRepositoryDb";
 import { isLocalSeedRepo } from "./localSeedRepos";
 import { listAgentCommitsForRepo, countAgentCommitsForRepo } from "./supabase";
-import type { Commit, RepositorySummary, SemanticCommitGraph } from "./types";
+import type { Commit, RepositorySummary } from "./types";
 import { repoKey } from "./types";
 
 function formatRelative(iso: string): string {
@@ -64,7 +64,6 @@ function gitHubCommitToView(
 export type RepoDataResult = {
   summary: RepositorySummary;
   commits: Commit[];
-  graph?: SemanticCommitGraph;
 };
 
 async function loadRemoteRepositoryData(org: string, name: string): Promise<RepoDataResult> {

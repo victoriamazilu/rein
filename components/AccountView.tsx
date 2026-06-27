@@ -14,7 +14,7 @@ export function AccountView() {
       <PageHeader
         breadcrumbs={[{ label: "Organizations", href: "/" }, { label: "Workspace" }]}
         title="Workspace"
-        description="Local preview — repositories are stored in your browser until we add cloud sync."
+        description="Local workspace preview. Repositories stay in your browser."
         actions={<AddRepositoryButton />}
         meta={
           ready ? (
@@ -28,7 +28,7 @@ export function AccountView() {
 
       <section className="panel">
         <div className="panel-header">
-          <h2>How it works</h2>
+          <h2>Setup</h2>
         </div>
         <ol className="how-list">
           <li>Add a repository with a git clone URL.</li>

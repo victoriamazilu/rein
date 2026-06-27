@@ -1,4 +1,4 @@
--- Add short LLM-generated titles for graph labels and search.
+-- Add short LLM-generated titles for search results.
 
 alter table public.agent_commits
 add column if not exists title text;
