@@ -1,6 +1,6 @@
 {
   "name": "AgentGit search value benchmark",
-  "description": "A small starter benchmark that checks whether AgentGit finds the commit memory a new teammate or future agent would need.",
+  "description": "A project-memory benchmark that checks whether AgentGit finds the commit context a new teammate or future agent would need.",
   "k": 5,
   "queries": [
     {
@@ -37,6 +37,26 @@
       "query": "How was the database setup made reliable for Supabase migrations?",
       "relevant": ["4336fae", "af07997"],
       "why": "A developer is debugging setup and migration behavior."
+    },
+    {
+      "query": "How do we backfill AgentGit memory from old git history?",
+      "relevant": ["0d315da"],
+      "why": "A maintainer wants to create memories for commits that happened before AgentGit was installed."
+    },
+    {
+      "query": "How does AgentGit separate memories for different repositories?",
+      "relevant": ["62975e3"],
+      "why": "A team wants to avoid mixing memories from different projects."
+    },
+    {
+      "query": "Why do agent commits have titles for graph labels?",
+      "relevant": ["837737d"],
+      "why": "A developer wants to understand the graph labeling design."
+    },
+    {
+      "query": "Where did the UI for browsing or backfilling agent commits come from?",
+      "relevant": ["4035e3c"],
+      "why": "A teammate wants to find the product-facing UI work."
     }
   ]
 }

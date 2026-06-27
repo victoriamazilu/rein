@@ -5,8 +5,9 @@ import {
   GitHubError,
   type GitHubCommit,
 } from "./github";
+import { loadLocalRepositoryData } from "./localRepositoryDb";
 import { listAgentCommitsForRepo, countAgentCommitsForRepo } from "./supabase";
-import type { Commit, RepositorySummary } from "./types";
+import type { Commit, RepositorySummary, SemanticCommitGraph } from "./types";
 import { repoKey } from "./types";
 
 function formatRelative(iso: string): string {
@@ -62,9 +63,10 @@ function gitHubCommitToView(
 export type RepoDataResult = {
   summary: RepositorySummary;
   commits: Commit[];
+  graph?: SemanticCommitGraph;
 };
 
-export async function loadRepositoryData(org: string, name: string): Promise<RepoDataResult> {
+async function loadRemoteRepositoryData(org: string, name: string): Promise<RepoDataResult> {
   const repoId = repoKey(org, name);
   const githubRepo = await fetchGitHubRepo(org, name);
   const branch = githubRepo.default_branch;
@@ -92,6 +94,25 @@ export async function loadRepositoryData(org: string, name: string): Promise<Rep
     },
     commits,
   };
+}
+
+export async function loadRepositoryData(org: string, name: string): Promise<RepoDataResult> {
+  const source = process.env.REIN_REPOSITORY_DATA_SOURCE ?? "auto";
+
+  if (source === "local") {
+    const localData = await loadLocalRepositoryData(org, name);
+    if (localData) return localData;
+    throw new GitHubError(`Repository ${repoKey(org, name)} was not found in the local database.`, 404);
+  }
+
+  if (source === "remote") {
+    return loadRemoteRepositoryData(org, name);
+  }
+
+  const localData = await loadLocalRepositoryData(org, name);
+  if (localData) return localData;
+
+  return loadRemoteRepositoryData(org, name);
 }
 
 export { GitHubError };

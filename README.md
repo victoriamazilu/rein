@@ -124,7 +124,43 @@ This creates:
 npm run build
 ```
 
-### 5. Link CLI locally
+### 5. Run the Workspace with local test data
+
+The Workspace page can run against the seeded local database in
+`data/local-repository-db.json`. This lets the app exercise repository summaries,
+commit tables, filters, memory coverage, and data-derived insights without
+depending on a populated Supabase project.
+
+```bash
+REIN_REPOSITORY_DATA_SOURCE=local npm run dev
+```
+
+Regenerate the deterministic compact seed database:
+
+```bash
+npm run seed:local
+LOCAL_SEED_MAX_COMMITS=75 npm run seed:local
+```
+
+`LOCAL_SEED_MAX_COMMITS` is clamped between 75 and 100 commits per repository.
+The default is 90, which keeps the fixture lightweight while preserving branches,
+PR/issue references, releases, affected files, semantic embeddings, risk scores,
+and graph relationships for every commit.
+
+Useful options:
+
+```bash
+REIN_REPOSITORY_DATA_SOURCE=auto
+REIN_REPOSITORY_DATA_SOURCE=remote
+REIN_LOCAL_REPOSITORY_DB=data/local-repository-db.json
+NEXT_PUBLIC_REIN_SEED_LOCAL_WORKSPACE=1
+```
+
+`auto` uses the local database for seeded repositories and falls back to the
+GitHub/Supabase provider for other repositories. `remote` uses GitHub for commit
+metadata and Supabase for AgentCommit memory.
+
+### 6. Link CLI locally
 
 ```bash
 npm link
