@@ -1,366 +1,334 @@
-# Rein
+# Rein / AgentGit
 
-Rein is an agent-native layer on top of GitHub. Git stores code history; Rein stores the agent context that goes with it. Every real git commit has a directly correlated **agent commit** — metadata that other agents can query later.
+Rein is an agent-native memory layer on top of git.
 
-This README is the onboarding doc for agents (and humans) working in this repo.
+Git stores code history. Rein stores semantic memory about commits so future agents can search prior intent, reasoning, and notes before starting work.
 
----
-
-## Core concepts
-
-### Git commit vs agent commit
-
-| | Git commit | Agent commit |
-|---|---|---|
-| **What it is** | Standard git history (sha, author, message, diff) | Rein metadata record linked 1:1 to a git commit |
-| **Where it lives** | Git / GitHub | Supabase (PostgreSQL) |
-| **Who creates it** | Whoever runs `git commit` | The coding agent, via `rein register` |
-| **ID** | Git SHA (e.g. `abc123...`) | Prefixed SHA (e.g. `rein:abc123...`) |
-
-```
-git commit  ──►  real commit (sha: abc123...)
-                      │
-                      ▼  1:1
-rein register ──►  agent commit (id: rein:abc123...)
-                      │
-                      ▼
-                 Supabase  ──►  queried by other agents
-```
-
-Git remains the source of truth for code. Rein is the source of truth for agent-oriented metadata about that code.
-
----
-
-## Design decisions (locked in)
-
-These are intentional constraints — do not change them without explicit discussion:
-
-1. **When** — An agent commit is created whenever a real commit is created. They are always paired.
-2. **Who** — The agent that wrote the code registers the agent commit (not a webhook, not a human).
-3. **Relationship** — Strict 1:1. One agent commit per git commit, no exceptions.
-4. **ID format** — `rein:<full-git-sha>`. The prefix is `rein:`; the rest is the complete git SHA.
-5. **Database** — Supabase (PostgreSQL). Agent commits live in the `agent_commits` table.
-
----
-
-## Agent workflow
-
-If you are an agent committing code in a Rein-enabled repo, follow this sequence **every time** you create a commit:
+The CLI command is:
 
 ```bash
-# 1. Make your changes and commit as usual
-git add <files>
-git commit -m "your message"
-
-# 2. Register the paired agent commit
-rein register
-# or, during development:
-npm run cli -- register
+agentgit
 ```
 
-`rein register` reads the current `HEAD` SHA and `origin` remote, then POSTs to the Rein API. It prints the agent commit as JSON:
+Core primitive:
 
-```json
-{
-  "id": "rein:2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
-  "git_sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
-  "repo": "victoriamazilu/rein",
-  "created_at": "2026-06-26T23:11:10.000Z"
+```bash
+agentgit commit
+```
+
+This creates a real git commit and stores an `AgentCommit` record in Supabase.
+
+---
+
+## Current commands
+
+```bash
+agentgit commit
+```
+
+Distills staged changes with an LLM, creates a git commit, embeds the memory text, and stores it in Supabase.
+
+```bash
+agentgit search "auth middleware"
+```
+
+Hybrid semantic + keyword search over stored AgentCommit memories.
+
+```bash
+agentgit show <sha>
+```
+
+Show the stored memory for a git commit SHA.
+
+---
+
+## AgentCommit schema
+
+MVP fields:
+
+```ts
+type AgentCommit = {
+  id: string
+  sha: string
+  intent: string
+  reasoning_trace: string
+  notes_for_future_agents: string
+  embedding_text: string
 }
 ```
 
-Registration is idempotent — calling it twice for the same SHA returns the existing record.
+The database also stores:
 
-### Prerequisites for `rein register`
-
-- You must be inside a git repo with at least one commit (`HEAD` must exist).
-- The repo should have an `origin` remote (used to derive `owner/repo`).
-- The Rein API server must be running (see [Running locally](#running-locally)).
+```ts
+embedding: vector
+created_at: timestamp
+```
 
 ---
 
-## Running locally
+## Setup
 
-### Setup
+### 1. Install dependencies
 
 ```bash
 npm install
-cp .env.example .env   # then fill in Supabase credentials
+```
+
+### 2. Create `.env`
+
+Required:
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+OPENAI_API_KEY=your-openai-key
+```
+
+Optional:
+
+```bash
+AGENTGIT_MODEL=gpt-4o-mini
+AGENTGIT_EMBEDDING_MODEL=text-embedding-3-small
+DATABASE_URL=postgresql://...
+```
+
+`DATABASE_URL` is only needed if you want to run the DB setup script from the CLI.
+
+### 3. Apply Supabase schema
+
+Option A: use the script. This requires `DATABASE_URL` in `.env`:
+
+```bash
+npm run db:setup
+```
+
+The setup script connects directly with `pg` and applies `supabase/migrations/001_agent_commits.sql`. We do not use `supabase db query` here because it can fail on multi-statement migration files with `cannot insert multiple commands into a prepared statement`.
+
+Option B: paste this file into the Supabase SQL editor:
+
+```txt
+supabase/migrations/001_agent_commits.sql
+```
+
+This creates:
+
+- `agent_commits` table
+- `vector` extension
+- full-text search column
+- vector index
+- `match_agent_commits` RPC for hybrid search
+
+### 4. Build
+
+```bash
 npm run build
 ```
 
-Requires **Node.js 20+** (required by `@supabase/server`).
-
-### Supabase setup
-
-1. Create a project at [supabase.com](https://supabase.com).
-2. Run the migration in `supabase/migrations/001_agent_commits.sql` via the Supabase SQL editor, or with the Supabase CLI:
-
-   ```bash
-   supabase db push
-   ```
-
-3. Copy credentials from Settings → API into `.env`:
-
-   ```bash
-   SUPABASE_URL=https://your-project.supabase.co
-   SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
-   SUPABASE_SECRET_KEY=sb_secret_...
-   SUPABASE_JWKS_URL=https://your-project.supabase.co/auth/v1/.well-known/jwks.json
-   ```
-
-4. Apply the database migration:
-
-   ```bash
-   # Add DATABASE_URL to .env (Settings → Database → Connection string, URI)
-   npm run db:setup
-   ```
-
-   Or paste `supabase/migrations/001_agent_commits.sql` into the Supabase SQL editor.
-
-   The secret key is used server-side only — it bypasses Row Level Security. Never expose it to clients or commit it to git.
-
-### `@supabase/server`
-
-The API uses [`@supabase/server`](https://github.com/supabase/server) with the Hono adapter. Each route is wrapped with `withSupabase`, which validates auth and injects a Supabase context into `c.var.supabaseContext`:
-
-- **`ctx.supabase`** — RLS-scoped client (publishable key or user JWT)
-- **`ctx.supabaseAdmin`** — admin client that bypasses RLS (secret key)
-
-Auth modes per route:
-
-| Route | Auth mode | Client used |
-|---|---|---|
-| `GET /health` | `none` | — |
-| `POST /agent-commits` | `secret` | `supabaseAdmin` |
-| `GET /agent-commits/*` | `publishable` or `secret` | `supabase` or `supabaseAdmin` |
-
-On Supabase Edge Functions, env vars are injected automatically. For non-`user` auth modes, set `verify_jwt = false` for the function in `supabase/config.toml`.
-
-### Start the API server
+### 5. Link CLI locally
 
 ```bash
-npm run dev          # watch mode (tsx)
-# or
-npm start            # production (compiled dist/)
+npm link
 ```
 
-Server defaults to `http://localhost:3000`.
-
-### Register a commit
+Then verify:
 
 ```bash
-npm run cli -- register
+agentgit --help
 ```
 
-### Environment variables
+Expected:
 
-| Variable | Required | Default | Description |
-|---|---|---|---|
-| `SUPABASE_URL` | yes | — | Supabase project URL |
-| `SUPABASE_SECRET_KEY` | yes | — | Secret key for server-to-server auth (`auth: 'secret'`) |
-| `SUPABASE_PUBLISHABLE_KEY` | for reads | — | Publishable key for client-facing reads (`auth: 'publishable'`) |
-| `SUPABASE_JWKS_URL` | for user auth | — | JWKS endpoint for JWT verification (`auth: 'user'`) |
-| `PORT` | no | `3000` | API server port |
-| `REIN_API_URL` | no | `http://localhost:3000` | API URL used by the CLI |
+```txt
+Usage: agentgit [options] [command]
+
+Commands:
+  commit [options]
+  search [options] <query...>
+  show <sha>
+```
 
 ---
 
-## API reference
+## Development usage
 
-Base URL: `http://localhost:3000` (or `REIN_API_URL`).
+You can run without linking:
 
-### `POST /agent-commits`
-
-Register an agent commit. Idempotent — returns `200` with the existing record if the SHA is already registered.
-
-**Auth:** `secret` — send the secret key in the `apikey` header.
-
-**Request body:**
-
-```json
-{
-  "git_sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
-  "repo": "victoriamazilu/rein"
-}
+```bash
+npm run agentgit -- --help
+npm run agentgit -- search "auth middleware"
+npm run agentgit -- commit
 ```
 
-**Response:** `201 Created` (new) or `200 OK` (existing)
+After linking, use:
 
-```json
-{
-  "id": "rein:2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
-  "git_sha": "2eb0ab5b219d96e711deb91b45c55f0ef328cd79",
-  "repo": "victoriamazilu/rein",
-  "created_at": "2026-06-26T23:11:10.000Z"
-}
+```bash
+agentgit --help
+agentgit search "auth middleware"
+agentgit commit
 ```
-
-### `GET /agent-commits/:id`
-
-Look up by agent commit ID (e.g. `rein:abc123...`).
-
-**Auth:** `publishable` or `secret` — send the key in the `apikey` header.
-
-### `GET /agent-commits/by-sha/:sha`
-
-Look up by raw git SHA (without the `rein:` prefix).
-
-**Auth:** `publishable` or `secret`.
-
-### `GET /repos/:repo/agent-commits`
-
-List all agent commits for a repo. Repo is URL-encoded `owner/repo` (e.g. `victoriamazilu%2Frein`).
-
-**Auth:** `publishable` or `secret`.
-
-Returns an array ordered by `created_at` descending.
 
 ---
 
-## Data model
+## Normal workflow
 
-### AgentCommit
+### Before starting a task
 
-```typescript
-interface AgentCommit {
-  id: string;         // "rein:<git_sha>"
-  git_sha: string;    // full git SHA
-  repo: string;       // "owner/repo" (normalized from origin remote)
-  created_at: string; // ISO 8601 timestamptz from Supabase
-}
+Search prior project memory:
+
+```bash
+agentgit search "auth middleware"
 ```
 
-### Supabase schema
+### After finishing a task
 
-Migration: `supabase/migrations/001_agent_commits.sql`
+Stage changes:
 
-```sql
-create table public.agent_commits (
-  id         text primary key,       -- rein:<git_sha>
-  git_sha    text not null unique,   -- 1:1 with git
-  repo       text not null,
-  created_at timestamptz not null default now()
-);
+```bash
+git add <files>
 ```
 
-### ID helpers
+Create git commit + semantic memory:
 
-```typescript
-const AGENT_COMMIT_PREFIX = "rein:";
-
-function agentCommitId(gitSha: string): string {
-  return `rein:${gitSha}`;
-}
-
-function parseAgentCommitId(id: string): string | null {
-  if (!id.startsWith("rein:")) return null;
-  return id.slice("rein:".length);
-}
+```bash
+agentgit commit
 ```
+
+Flow:
+
+```txt
+staged diff
+  -> LLM distillation
+  -> git commit
+  -> get SHA
+  -> generate embedding
+  -> store AgentCommit in Supabase
+```
+
+Dry run:
+
+```bash
+agentgit commit --dry-run
+```
+
+This prints the generated commit message and memory without committing.
+
+---
+
+## Example commands from local setup
+
+Build:
+
+```bash
+npm run build
+```
+
+Run search through npm:
+
+```bash
+npm run agentgit -- search "auth middleware"
+```
+
+Link CLI:
+
+```bash
+npm link
+```
+
+Use linked CLI:
+
+```bash
+agentgit --help
+agentgit search "auth middleware"
+```
+
+Apply DB setup:
+
+```bash
+npm run db:setup
+```
+
+---
+
+## Troubleshooting
+
+### `npm run db:setup` fails with `cannot insert multiple commands into a prepared statement`
+
+This was caused by using `supabase db query` on a multi-statement SQL migration. The setup script now uses the `pg` package directly, so rerun:
+
+```bash
+npm install
+npm run db:setup
+```
+
+### `agentgit search` returns `Error: [object Object]`
+
+This usually means Supabase returned an error object. Common causes:
+
+1. The migration has not been applied.
+2. `match_agent_commits` RPC does not exist yet.
+3. `vector` extension is not enabled.
+4. `.env` has the wrong Supabase key.
+5. `OPENAI_API_KEY` is missing or invalid.
+
+Run:
+
+```bash
+npm run db:setup
+```
+
+Or paste `supabase/migrations/001_agent_commits.sql` into Supabase SQL editor.
+
+Then rebuild:
+
+```bash
+npm run build
+```
+
+### `No staged changes`
+
+`agentgit commit` only commits staged changes. Run:
+
+```bash
+git add <files>
+agentgit commit
+```
+
+### Supabase insert fails after git commit succeeds
+
+The git commit is not rolled back. Rein writes a recovery file to:
+
+```txt
+.agentgit/pending/<sha>.json
+```
+
+A future `agentgit sync` command can upload these pending memories.
 
 ---
 
 ## Project structure
 
-```
+```txt
 rein/
 ├── src/
-│   ├── types.ts    # AgentCommit interface, ID helpers (rein:<sha>)
-│   ├── db.ts       # Supabase store (AgentCommitStore)
-│   ├── git.ts      # Read HEAD sha and origin remote from local git
-│   ├── server.ts   # HTTP API (Hono)
-│   └── cli.ts      # `rein register` command for coding agents
+│   ├── cli.ts      # agentgit commands
+│   ├── db.ts       # Supabase client/store
+│   ├── git.ts      # git helpers
+│   ├── llm.ts      # OpenAI distillation + embeddings
+│   ├── types.ts    # AgentCommit types
+│   └── server.ts   # older HTTP API compatibility layer
 ├── supabase/
 │   └── migrations/
 │       └── 001_agent_commits.sql
-├── .env.example
+├── plan.md
 ├── package.json
-├── tsconfig.json
-└── README.md
+└── tsconfig.json
 ```
-
-| File | Responsibility |
-|---|---|
-| `types.ts` | Core types and ID format. Start here when adding new agent commit fields. |
-| `db.ts` | Supabase persistence via clients from `@supabase/server` context. |
-| `git.ts` | Local git introspection (HEAD, origin remote normalization). |
-| `server.ts` | REST API (Hono + `@supabase/server/adapters/hono`). |
-| `cli.ts` | What coding agents call after `git commit`. |
-| `supabase/migrations/` | SQL migrations to run against your Supabase project. |
 
 ---
 
-## Querying agent commits (for downstream agents)
+## Notes
 
-Other agents that need context about a commit should query Rein, not scrape git logs.
-
-**By git SHA** (most common — you know the commit you're looking at):
-
-```bash
-curl -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-  http://localhost:3000/agent-commits/by-sha/abc123...
-```
-
-**By agent commit ID**:
-
-```bash
-curl -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-  http://localhost:3000/agent-commits/rein:abc123...
-```
-
-**All commits in a repo**:
-
-```bash
-curl -H "apikey: $SUPABASE_PUBLISHABLE_KEY" \
-  http://localhost:3000/repos/victoriamazilu%2Frein/agent-commits
-```
-
-If no agent commit exists for a git SHA, the API returns `404`. That means the commit was never registered — either it predates Rein, or the coding agent skipped `rein register`.
-
----
-
-## What's not built yet
-
-The current schema has only the minimum fields (`id`, `git_sha`, `repo`, `created_at`). Planned but not implemented:
-
-- **Additional agent commit fields** — reasoning, tool calls, parent agent session, diff summary, etc. (TBD)
-- **Auto-registration** — post-commit git hook so agents don't have to remember the CLI call
-- **GitHub webhook fallback** — for commits that land without agent registration
-- **Row Level Security policies** — reads with publishable key use RLS-scoped `ctx.supabase`; add policies before exposing reads publicly
-
-When adding fields, update in this order: `types.ts` → `supabase/migrations/` (new migration) → `db.ts` → `server.ts` (API) → `cli.ts` (if the agent sends them at registration time).
-
----
-
-## Conventions
-
-- **Prefix is always `rein:`** — defined in `AGENT_COMMIT_PREFIX` in `src/types.ts`.
-- **Repo format is `owner/repo`** — normalized from GitHub origin URLs in `src/git.ts`.
-- **ESM + TypeScript** — `"type": "module"`, compile with `tsc`, run with `node dist/`.
-- **Keep git and Rein separate** — never embed agent metadata in git commit messages or git objects. Rein owns its own database.
-- **1:1 is invariant** — one agent commit per git commit. Do not support many-to-one or one-to-many without revisiting the core design.
-- **Never commit secrets** — `.env` is gitignored; use `.env.example` as the template.
-
----
-
-## Quick reference for agents
-
-```
-After every git commit:
-  rein register          # or: npm run cli -- register
-
-Before querying another commit's context:
-  GET /agent-commits/by-sha/:sha
-
-Agent commit ID format:
-  rein:<full-git-sha>
-
-If register fails:
-  - Is the API running? (npm run dev)
-  - Is .env configured with Supabase credentials?
-  - Has the migration been applied? (supabase/migrations/001_agent_commits.sql)
-  - Are you in a git repo with a commit?
-  - Does origin remote exist?
-  - Is SUPABASE_SECRET_KEY set? (required for rein register)
-```
+- Use `agentgit commit`, not `git commit`, when an agent finishes a task.
+- Git remains the source of truth for code.
+- Supabase stores semantic memory.
+- Search is hybrid: OpenAI embeddings + Postgres full-text search.
