@@ -33,6 +33,7 @@ Given the staged git diff, produce durable project memory for future coding agen
 
 Return strict JSON with this exact shape:
 {
+  "title": string,
   "commit_message": string,
   "intent": string,
   "reasoning_trace": string,
@@ -42,10 +43,11 @@ Return strict JSON with this exact shape:
 
 Guidelines:
 - Be concise but useful.
+- title: short memory note name for graph UI — 2-5 words, Title Case, no trailing period (e.g. "Search Tips Doc", "Memory Graph View", "DB Setup Fix").
 - Focus on decisions, intent, and future implications.
 - Do not describe obvious line-by-line changes.
 - Do not include generic advice.
-- embedding_text should combine semantic information future agents might search for.
+- embedding_text should combine semantic information future agents might search for; include the title concept.
 - commit_message should be a normal concise git commit message.
 
 Git status:
@@ -101,6 +103,7 @@ function validateDistillation(value: unknown): DistilledAgentCommit {
 
   const obj = value as Record<string, unknown>;
   const result: DistilledAgentCommit = {
+    title: validateTitle(requiredString(obj, "title")),
     commit_message: requiredString(obj, "commit_message"),
     intent: requiredString(obj, "intent"),
     reasoning_trace: requiredString(obj, "reasoning_trace"),
@@ -109,6 +112,16 @@ function validateDistillation(value: unknown): DistilledAgentCommit {
   };
 
   return result;
+}
+
+const MAX_TITLE_LENGTH = 40;
+
+function validateTitle(value: string): string {
+  const trimmed = value.trim();
+  if (trimmed.length > MAX_TITLE_LENGTH) {
+    return `${trimmed.slice(0, MAX_TITLE_LENGTH - 1)}…`;
+  }
+  return trimmed;
 }
 
 function requiredString(obj: Record<string, unknown>, key: string): string {

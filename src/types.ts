@@ -1,6 +1,7 @@
 export interface AgentCommit {
   id: string;
   sha: string;
+  title?: string | null;
   intent: string;
   reasoning_trace: string;
   notes_for_future_agents: string;
@@ -10,6 +11,7 @@ export interface AgentCommit {
 }
 
 export interface DistilledAgentCommit {
+  title: string;
   commit_message: string;
   intent: string;
   reasoning_trace: string;

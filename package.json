@@ -13,8 +13,14 @@
     "start": "node dist/server.js",
     "cli": "tsx src/cli.ts",
     "agentgit": "tsx src/cli.ts",
+<<<<<<< Updated upstream
     "db:setup": "node scripts/setup-db.mjs",
     "backboard:smoke": "node scripts/backboard-smoke.mjs"
+=======
+    "db:setup": "node scripts/setup-db.mjs 001_agent_commits.sql",
+    "db:migrate": "node scripts/setup-db.mjs 002_fix_search.sql",
+    "db:migrate:title": "node scripts/setup-db.mjs 003_add_title.sql"
+>>>>>>> Stashed changes
   },
   "dependencies": {
     "@hono/node-server": "^1.13.0",

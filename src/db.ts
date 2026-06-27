@@ -1,6 +1,9 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import type { AgentCommit, AgentCommitSearchResult } from "./types.js";
 
+const AGENT_COMMIT_FIELDS =
+  "id, sha, title, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at";
+
 export function createSupabase(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
   const key =
@@ -33,6 +36,7 @@ export class AgentCommitStore {
       typeof inputOrSha === "string"
         ? {
             sha: inputOrSha,
+            title: "Legacy Registration",
             intent: "Legacy API registration",
             reasoning_trace: "Registered through the compatibility API without distillation.",
             notes_for_future_agents: "No semantic memory was generated for this commit.",
@@ -54,7 +58,7 @@ export class AgentCommitStore {
   async getById(id: string): Promise<AgentCommit | null> {
     const { data, error } = await this.supabase
       .from("agent_commits")
-      .select("id, sha, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at")
+      .select(AGENT_COMMIT_FIELDS)
       .eq("id", id)
       .maybeSingle();
 
@@ -65,7 +69,7 @@ export class AgentCommitStore {
   async getBySha(sha: string): Promise<AgentCommit | null> {
     const { data, error } = await this.supabase
       .from("agent_commits")
-      .select("id, sha, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at")
+      .select(AGENT_COMMIT_FIELDS)
       .eq("sha", sha)
       .maybeSingle();
 
@@ -80,9 +84,7 @@ export class AgentCommitStore {
   async listAll(): Promise<AgentCommit[]> {
     const { data, error } = await this.supabase
       .from("agent_commits")
-      .select(
-        "id, sha, intent, reasoning_trace, notes_for_future_agents, embedding_text, embedding, created_at"
-      )
+      .select(`${AGENT_COMMIT_FIELDS}, embedding`)
       .order("created_at", { ascending: true });
 
     if (error) throw error;

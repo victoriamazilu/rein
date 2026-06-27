@@ -1,11 +1,14 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import { git, isInsideGitRepo } from "./git.js";
 import type { AgentCommit } from "./types.js";
 
 export interface GraphNode {
   id: string;
   sha: string;
   shortSha: string;
+  title: string;
+  label: string;
   intent: string;
   notes: string;
   createdAt: string;
@@ -21,7 +24,7 @@ export interface GraphEdge {
 }
 
 /** Default minimum cosine similarity to draw a semantic link between commits. */
-export const DEFAULT_SEMANTIC_THRESHOLD = 0.85;
+export const DEFAULT_SEMANTIC_THRESHOLD = 0.78;
 
 export interface MemoryGraph {
   nodes: GraphNode[];
@@ -57,6 +60,40 @@ export function cosineSimilarity(a: number[], b: number[]): number {
   return denom === 0 ? 0 : dot / denom;
 }
 
+export function shortenGraphLabel(text: string, maxLength = 26): string {
+  const trimmed = text.trim();
+  if (trimmed.length <= maxLength) return trimmed;
+  return `${trimmed.slice(0, maxLength - 1)}…`;
+}
+
+export function intentToTitle(intent: string, maxLength = 52): string {
+  let text = intent.trim();
+  if (/^to\s+/i.test(text)) text = text.replace(/^to\s+/i, "");
+  const firstSentence = text.match(/^[^.!?]+/)?.[0]?.trim() ?? text;
+  text = firstSentence.charAt(0).toUpperCase() + firstSentence.slice(1);
+  if (text.length <= maxLength) return text;
+  return `${text.slice(0, maxLength - 1)}…`;
+}
+
+function getCommitSubject(sha: string): string | null {
+  if (!isInsideGitRepo()) return null;
+  try {
+    return git(["show", "-s", "--format=%s", sha]);
+  } catch {
+    return null;
+  }
+}
+
+function nodeTitle(commit: AgentCommit): string {
+  if (commit.title?.trim()) return commit.title.trim();
+  return getCommitSubject(commit.sha) ?? intentToTitle(commit.intent, 40);
+}
+
+function nodeLabel(commit: AgentCommit, title: string): string {
+  if (commit.title?.trim()) return commit.title.trim();
+  return shortenGraphLabel(title, 22);
+}
+
 export function buildMemoryGraph(
   commits: AgentCommit[],
   opts?: { similarityThreshold?: number; maxSemanticEdgesPerNode?: number }
@@ -67,28 +104,23 @@ export function buildMemoryGraph(
   const nodes: GraphNode[] = commits
     .slice()
     .sort((a, b) => a.created_at.localeCompare(b.created_at))
-    .map((commit) => ({
-      id: commit.id,
-      sha: commit.sha,
-      shortSha: commit.sha.slice(0, 7),
-      intent: commit.intent,
-      notes: commit.notes_for_future_agents,
-      createdAt: commit.created_at,
-      embedding: parseEmbedding(commit.embedding),
-    }));
+    .map((commit) => {
+      const title = nodeTitle(commit);
+      return {
+        id: commit.id,
+        sha: commit.sha,
+        shortSha: commit.sha.slice(0, 7),
+        title,
+        label: nodeLabel(commit, title),
+        intent: commit.intent,
+        notes: commit.notes_for_future_agents,
+        createdAt: commit.created_at,
+        embedding: parseEmbedding(commit.embedding),
+      };
+    });
 
   const edges: GraphEdge[] = [];
   const edgeKey = (from: string, to: string) => `${from}:${to}`;
-
-  for (let i = 1; i < nodes.length; i++) {
-    edges.push({
-      from: nodes[i - 1].id,
-      to: nodes[i].id,
-      kind: "temporal",
-      weight: 1,
-      label: "time",
-    });
-  }
 
   for (let i = 0; i < nodes.length; i++) {
     const source = nodes[i];
@@ -130,15 +162,21 @@ export function buildMemoryGraph(
 
 export function addSearchEdges(
   graph: MemoryGraph,
-  results: Array<{ id: string; combined_score: number }>
+  results: Array<{ id: string; combined_score: number }>,
+  queryLabel?: string
 ): MemoryGraph {
   if (results.length === 0) return graph;
 
   const searchRootId = "__search__";
+  const searchTitle = queryLabel?.trim()
+    ? `Search: ${queryLabel.trim()}`
+    : "Search query";
   const searchNode: GraphNode = {
     id: searchRootId,
     sha: "query",
     shortSha: "query",
+    title: searchTitle,
+    label: shortenGraphLabel(searchTitle, 22),
     intent: "Search query (simulated agent lookup)",
     notes: "Edges show what an agentgit search would surface.",
     createdAt: new Date().toISOString(),
@@ -187,14 +225,20 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     .link { fill: none; stroke-linecap: round; }
     .link.temporal { stroke-dasharray: 3 5; }
     .node circle { stroke-width: 1.5px; transition: r 0.15s ease; }
-    .node text {
-      font-size: 11px;
-      fill: rgba(220, 221, 222, 0.45);
-      pointer-events: none;
-      user-select: none;
+    .node-title {
+      font-size: 12px;
+      font-weight: 500;
+      fill: rgba(220, 221, 222, 0.55);
     }
-    .node.active text { fill: rgba(220, 221, 222, 0.95); font-weight: 500; }
-    .node.dim text { fill: rgba(220, 221, 222, 0.12); }
+    .node-sub {
+      font-size: 9px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      fill: rgba(167, 139, 250, 0.45);
+    }
+    .node.active .node-title { fill: rgba(220, 221, 222, 0.98); }
+    .node.active .node-sub { fill: rgba(196, 181, 253, 0.85); }
+    .node.dim .node-title { fill: rgba(220, 221, 222, 0.1); }
+    .node.dim .node-sub { fill: rgba(167, 139, 250, 0.08); }
     .hud {
       position: fixed;
       top: 14px;
@@ -230,11 +274,18 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       z-index: 2;
     }
     #detail h2 {
-      margin: 0 0 10px;
-      font-size: 12px;
+      margin: 0 0 4px;
+      font-size: 14px;
       font-weight: 600;
-      color: #c4b5fd;
-      font-family: ui-monospace, monospace;
+      color: #dcddde;
+      line-height: 1.35;
+    }
+    #detail .sha {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      color: rgba(167, 139, 250, 0.75);
     }
     #detail .label {
       font-size: 10px;
@@ -281,7 +332,7 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
 <body>
   <div class="hud">
     <h1>${escapeHtml(title)}</h1>
-    <p>${graph.nodes.length} notes · semantic links ≥ ${threshold.toFixed(2)} · drag · scroll to zoom</p>
+    <p id="hud-stats">${graph.nodes.length} notes · semantic links ≥ ${threshold.toFixed(2)} · drag · scroll to zoom</p>
   </div>
   <svg id="canvas"></svg>
   <div id="detail"></div>
@@ -296,9 +347,6 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
 
     const nodes = raw.nodes.map((n) => ({
       ...n,
-      label: n.id === "__search__"
-        ? "search"
-        : truncate(n.intent, 28) || n.shortSha,
       isSearch: n.id === "__search__",
     }));
 
@@ -318,6 +366,17 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     const visibleLinks = links.filter(
       (l) => l.kind !== "semantic" || l.weight >= semanticThreshold
     );
+    const semanticCount = visibleLinks.filter((l) => l.kind === "semantic").length;
+    const hudStats = document.getElementById("hud-stats");
+    if (semanticCount === 0) {
+      hudStats.textContent =
+        raw.nodes.length + " notes · no semantic links at ≥ " + semanticThreshold.toFixed(2) +
+        " · try --threshold 0.75";
+    } else {
+      hudStats.textContent =
+        raw.nodes.length + " notes · " + semanticCount + " semantic link" +
+        (semanticCount === 1 ? "" : "s") + " · threshold ≥ " + semanticThreshold.toFixed(2);
+    }
 
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -353,23 +412,38 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       })
       .attr("stroke-opacity", 1);
 
+    nodes.forEach((n, i) => {
+      const angle = (i / nodes.length) * 2 * Math.PI;
+      const r = 55 + Math.random() * 35;
+      n.x = width / 2 + r * Math.cos(angle);
+      n.y = height / 2 + r * Math.sin(angle);
+    });
+
+    function collisionRadius(d) {
+      const titleLen = Math.min(d.label?.length ?? 8, 28);
+      return 14 + titleLen * 1.35;
+    }
+
     let sim = d3.forceSimulation(nodes)
       .force("link", d3.forceLink(visibleLinks)
         .id((d) => d.id)
         .distance((d) => {
-          if (d.kind === "search") return 90;
-          if (d.kind === "temporal") return 55;
-          return 70 + (1 - d.weight) * 40;
+          if (d.kind === "search") return 72;
+          if (d.kind === "temporal") return 48;
+          return 56 + (1 - d.weight) * 28;
         })
         .strength((d) => {
-          if (d.kind === "search") return 0.55;
+          if (d.kind === "search") return 0.62;
           if (d.kind === "temporal") return 0.35;
-          return 0.25 + d.weight * 0.35;
+          return 0.35 + d.weight * 0.32;
         }))
-      .force("charge", d3.forceManyBody().strength(-180).distanceMax(420))
+      .force("charge", d3.forceManyBody().strength(-115).distanceMax(300))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius((d) => (d.isSearch ? 18 : 14)))
-      .alphaDecay(0.025)
+      .force("x", d3.forceX(width / 2).strength(0.035))
+      .force("y", d3.forceY(height / 2).strength(0.035))
+      .force("collision", d3.forceCollide().radius(collisionRadius).strength(0.92))
+      .alphaDecay(0.024)
+      .velocityDecay(0.38)
       .on("tick", ticked);
 
     const node = root.append("g")
@@ -386,10 +460,21 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       .attr("stroke", (d) => (d.isSearch ? "#f59e0b" : "#a78bfa"))
       .attr("fill-opacity", 0.85);
 
-    node.append("text")
-      .attr("x", 10)
-      .attr("y", 3)
-      .text((d) => d.label);
+    node.each(function (d) {
+      const g = d3.select(this);
+      g.append("text")
+        .attr("class", "node-title")
+        .attr("x", 10)
+        .attr("y", 0)
+        .text(d.label);
+      if (!d.isSearch) {
+        g.append("text")
+          .attr("class", "node-sub")
+          .attr("x", 10)
+          .attr("y", 14)
+          .text(d.shortSha);
+      }
+    });
 
     const detail = document.getElementById("detail");
     let focusId = null;
@@ -456,10 +541,12 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
       const meta = nodesById[d.id];
       detail.style.display = "block";
       detail.innerHTML =
-        "<h2>" + escapeHtml(meta.shortSha) + "</h2>" +
+        "<h2>" + escapeHtml(meta.title) + "</h2>" +
+        (meta.id === "__search__"
+          ? ""
+          : '<span class="sha">' + escapeHtml(meta.shortSha) + " · " + escapeHtml(meta.sha) + "</span>") +
         '<div class="label">Intent</div><p>' + escapeHtml(meta.intent) + "</p>" +
-        '<div class="label">Notes</div><p>' + escapeHtml(meta.notes) + "</p>" +
-        "<code>" + escapeHtml(meta.sha) + "</code>";
+        '<div class="label">Notes</div><p>' + escapeHtml(meta.notes) + "</p>";
     }
 
     function ticked() {
@@ -498,11 +585,11 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
 
     function fitView() {
       const bounds = root.node().getBBox();
-      const pad = 48;
+      const pad = 40;
       const scale = Math.min(
         (width - pad * 2) / bounds.width,
         (height - pad * 2) / bounds.height,
-        2
+        2.4
       ) || 1;
       const tx = width / 2 - scale * (bounds.x + bounds.width / 2);
       const ty = height / 2 - scale * (bounds.y + bounds.height / 2);
@@ -515,11 +602,6 @@ export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Gra
     window.addEventListener("resize", () => location.reload());
 
     setTimeout(fitView, 900);
-
-    function truncate(text, max) {
-      if (!text || text.length <= max) return text || "";
-      return text.slice(0, max - 1) + "…";
-    }
 
     function escapeHtml(value) {
       return String(value)

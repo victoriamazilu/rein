@@ -68,6 +68,7 @@ program
           existing ??
           (await store.create({
             sha,
+            title: distilled.title,
             intent: distilled.intent,
             reasoning_trace: distilled.reasoning_trace,
             notes_for_future_agents: distilled.notes_for_future_agents,
@@ -77,6 +78,7 @@ program
 
         console.log("\n✓ AgentGit commit complete");
         console.log(`SHA: ${agentCommit.sha}`);
+        if (agentCommit.title) console.log(`Title: ${agentCommit.title}`);
         console.log(`Intent: ${agentCommit.intent}`);
         console.log(`Notes: ${agentCommit.notes_for_future_agents}`);
       } catch (err) {
@@ -135,7 +137,7 @@ program
   .option(
     "--threshold <similarity>",
     "Minimum cosine similarity for a thick semantic link (0–1)",
-    "0.85"
+    "0.78"
   )
   .action(async (opts: { output: string; query?: string; threshold: string }) => {
     try {
@@ -158,7 +160,8 @@ program
         const results = await store.search(opts.query, queryEmbedding, 5);
         graph = addSearchEdges(
           graph,
-          results.map((result) => ({ id: result.id, combined_score: result.combined_score }))
+          results.map((result) => ({ id: result.id, combined_score: result.combined_score })),
+          opts.query
         );
       }
 
@@ -189,7 +192,16 @@ program
         process.exit(1);
       }
 
+<<<<<<< Updated upstream
       printAgentCommit(agentCommit);
+=======
+      console.log(`Commit: ${agentCommit.sha}\n`);
+      if (agentCommit.title) console.log(`Title: ${agentCommit.title}\n`);
+      console.log(`Intent:\n${agentCommit.intent}\n`);
+      console.log(`Reasoning Trace:\n${agentCommit.reasoning_trace}\n`);
+      console.log(`Notes for Future Agents:\n${agentCommit.notes_for_future_agents}\n`);
+      console.log(`Embedding Text:\n${agentCommit.embedding_text}`);
+>>>>>>> Stashed changes
     } catch (err) {
       printError(err);
       process.exit(1);
