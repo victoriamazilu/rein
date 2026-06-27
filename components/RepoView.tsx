@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { notFound, useRouter } from "next/navigation";
 import { CommitMemoryList } from "@/components/CommitMemoryList";
+import { MemoryGraphPanel } from "@/components/MemoryGraphPanel";
 import { useWorkspace } from "@/components/WorkspaceProvider";
 import { PageHeader, StatPill } from "@/components/ui";
 import { useRepositoryData } from "@/hooks/useRepositoryData";
@@ -88,6 +89,8 @@ export function RepoView({ orgSlug, repoName }: { orgSlug: string; repoName: str
         </aside>
 
         <div className="repo-main">
+          <MemoryGraphPanel org={orgSlug} name={repoName} />
+
           <section className="panel">
             <div className="panel-header">
               <h2>Overview</h2>
