@@ -16,6 +16,7 @@ import {
   resolveCommitSha,
 } from "./git.js";
 import { addSearchEdges, buildMemoryGraph, writeGraphHtml } from "./graph.js";
+import { backfillAgentCommits } from "./backfill.js";
 import { distillAgentCommit, embedText } from "./llm.js";
 
 const program = new Command();
@@ -111,11 +112,11 @@ program
       const results = await store.search(query, queryEmbedding, count);
 
       if (results.length === 0) {
-        console.log("No matching AgentCommits found.");
+        console.log("No matching agent_commits found.");
         return;
       }
 
-      console.log("\nRelevant AgentCommits:\n");
+      console.log("\nRelevant agent_commits:\n");
       results.forEach((result, index) => {
         console.log(`${index + 1}. ${shortSha(result.sha)} — ${result.intent}`);
         console.log(`   SHA: ${result.sha}`);
@@ -149,7 +150,7 @@ program
       const store = new AgentCommitStore(createSupabase());
       const commits = await store.listAll();
       if (commits.length === 0) {
-        console.log("No AgentCommits found. Run `agentgit commit` first.");
+        console.log("No agent_commits found. Run `agentgit commit` first.");
         return;
       }
 
@@ -178,6 +179,57 @@ program
   });
 
 program
+  .command("backfill")
+  .description("Distill and store agent_commits for existing git history")
+  .option("--from <ref>", "Start at this commit (inclusive)")
+  .option("--to <ref>", "End at this commit (inclusive)", "HEAD")
+  .option("-n, --max <count>", "Maximum number of commits to process")
+  .option("--dry-run", "Distill and print memory without storing")
+  .option("--force", "Re-process commits even if already stored")
+  .option("--delay-ms <ms>", "Pause between commits (rate limiting)", "0")
+  .action(async (opts: {
+    from?: string;
+    to?: string;
+    max?: string;
+    dryRun?: boolean;
+    force?: boolean;
+    delayMs: string;
+  }) => {
+    try {
+      assertGitRepo();
+
+      const max = opts.max ? Number.parseInt(opts.max, 10) : undefined;
+      if (opts.max && (!Number.isFinite(max!) || max! <= 0)) {
+        throw new Error("--max must be a positive number");
+      }
+
+      const delayMs = Number.parseInt(opts.delayMs, 10);
+      if (!Number.isFinite(delayMs) || delayMs < 0) {
+        throw new Error("--delay-ms must be a non-negative number");
+      }
+
+      const result = await backfillAgentCommits({
+        from: opts.from,
+        to: opts.to,
+        max,
+        dryRun: opts.dryRun,
+        force: opts.force,
+        delayMs: delayMs || undefined,
+      });
+
+      console.log("\nBackfill complete");
+      console.log(`Total: ${result.total} | Stored: ${result.stored} | Skipped: ${result.skipped} | Failed: ${result.failed.length}`);
+
+      if (result.failed.length > 0) {
+        process.exit(1);
+      }
+    } catch (err) {
+      printError(err);
+      process.exit(1);
+    }
+  });
+
+program
   .command("show")
   .description("Show AgentCommit metadata for a git commit ref")
   .argument("[ref]", "Git commit ref, SHA, or short SHA", "HEAD")
@@ -192,16 +244,7 @@ program
         process.exit(1);
       }
 
-<<<<<<< Updated upstream
       printAgentCommit(agentCommit);
-=======
-      console.log(`Commit: ${agentCommit.sha}\n`);
-      if (agentCommit.title) console.log(`Title: ${agentCommit.title}\n`);
-      console.log(`Intent:\n${agentCommit.intent}\n`);
-      console.log(`Reasoning Trace:\n${agentCommit.reasoning_trace}\n`);
-      console.log(`Notes for Future Agents:\n${agentCommit.notes_for_future_agents}\n`);
-      console.log(`Embedding Text:\n${agentCommit.embedding_text}`);
->>>>>>> Stashed changes
     } catch (err) {
       printError(err);
       process.exit(1);
@@ -239,6 +282,7 @@ function errorMessage(err: unknown): string {
 
 function printAgentCommit(agentCommit: {
   sha: string;
+  title?: string | null;
   intent: string;
   reasoning_trace: string;
   notes_for_future_agents: string;
@@ -247,6 +291,7 @@ function printAgentCommit(agentCommit: {
 }): void {
   console.log(`Commit: ${agentCommit.sha}`);
   if (agentCommit.created_at) console.log(`Created: ${agentCommit.created_at}`);
+  if (agentCommit.title) console.log(`Title: ${agentCommit.title}`);
   console.log("");
   console.log(`Intent:\n${agentCommit.intent}\n`);
   console.log(`Reasoning Trace:\n${agentCommit.reasoning_trace}\n`);

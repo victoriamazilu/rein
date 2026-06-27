@@ -1,8 +1,16 @@
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { createClient, type PostgrestError, type SupabaseClient } from "@supabase/supabase-js";
 import type { AgentCommit, AgentCommitSearchResult } from "./types.js";
 
 const AGENT_COMMIT_FIELDS =
   "id, sha, title, intent, reasoning_trace, notes_for_future_agents, embedding_text, created_at";
+
+function throwDbError(error: PostgrestError): never {
+  const hint =
+    error.code === "42703" && error.message.includes("title")
+      ? " Run `npm run db:migrate:title` to add the title column."
+      : "";
+  throw new Error(`${error.message}${hint}`);
+}
 
 export function createSupabase(): SupabaseClient {
   const url = process.env.SUPABASE_URL;
@@ -51,7 +59,18 @@ export class AgentCommitStore {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) throwDbError(error);
+    return data as AgentCommit;
+  }
+
+  async upsert(input: Omit<AgentCommit, "id" | "created_at">): Promise<AgentCommit> {
+    const { data, error } = await this.supabase
+      .from("agent_commits")
+      .upsert(input, { onConflict: "sha" })
+      .select()
+      .single();
+
+    if (error) throwDbError(error);
     return data as AgentCommit;
   }
 
@@ -62,7 +81,7 @@ export class AgentCommitStore {
       .eq("id", id)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) throwDbError(error);
     return (data as AgentCommit | null) ?? null;
   }
 
@@ -73,7 +92,7 @@ export class AgentCommitStore {
       .eq("sha", sha)
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) throwDbError(error);
     return (data as AgentCommit | null) ?? null;
   }
 
@@ -87,7 +106,7 @@ export class AgentCommitStore {
       .select(`${AGENT_COMMIT_FIELDS}, embedding`)
       .order("created_at", { ascending: true });
 
-    if (error) throw error;
+    if (error) throwDbError(error);
     return (data ?? []) as AgentCommit[];
   }
 
@@ -102,7 +121,7 @@ export class AgentCommitStore {
       match_count: matchCount,
     });
 
-    if (error) throw error;
+    if (error) throwDbError(error);
     return (data ?? []) as AgentCommitSearchResult[];
   }
 }

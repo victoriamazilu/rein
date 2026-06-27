@@ -38,7 +38,7 @@ app.get("/health", withSupabase({ auth: "none" }), (c) =>
 );
 
 app.post(
-  "/agent-commits",
+  "/agent_commits",
   withSupabase({ auth: "secret" }),
   async (c) => {
     const ctx = c.var.supabaseContext;
@@ -65,7 +65,7 @@ app.post(
 );
 
 app.get(
-  "/agent-commits/:id",
+  "/agent_commits/:id",
   withSupabase({ auth: ["publishable", "secret"] }),
   async (c) => {
     const ctx = c.var.supabaseContext;
@@ -77,7 +77,7 @@ app.get(
 );
 
 app.get(
-  "/agent-commits/by-sha/:sha",
+  "/agent_commits/by-sha/:sha",
   withSupabase({ auth: ["publishable", "secret"] }),
   async (c) => {
     const ctx = c.var.supabaseContext;
@@ -89,13 +89,13 @@ app.get(
 );
 
 app.get(
-  "/repos/:repo/agent-commits",
+  "/repos/:repo/agent_commits",
   withSupabase({ auth: ["publishable", "secret"] }),
   async (c) => {
     const ctx = c.var.supabaseContext;
     const repo = decodeURIComponent(c.req.param("repo"));
-    const agentCommits = await store(ctx).listByRepo(repo);
-    return c.json(agentCommits);
+    const agent_commits = await store(ctx).listByRepo(repo);
+    return c.json(agent_commits);
   }
 );
 
