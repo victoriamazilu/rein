@@ -4,7 +4,6 @@
   "description": "Agent-native layer on top of GitHub commits",
   "type": "module",
   "bin": {
-    "agentgit": "./dist/cli.js",
     "rein": "./dist/cli.js"
   },
   "scripts": {
@@ -15,11 +14,11 @@
     "dev:api": "tsx watch src/server.ts",
     "start:api": "node dist/server.js",
     "cli": "tsx src/cli.ts",
-    "agentgit": "tsx src/cli.ts",
+    "rein": "tsx src/cli.ts",
     "db:setup": "node scripts/setup-db.mjs 001_agent_commits.sql",
     "db:migrate:title": "node scripts/setup-db.mjs 003_add_title.sql",
     "db:migrate:repo": "node scripts/setup-db.mjs 004_add_repo.sql",
-    "benchmark": "node scripts/benchmark-agentgit.mjs",
+    "benchmark": "node scripts/benchmark-rein.mjs",
     "backboard:smoke": "node scripts/backboard-smoke.mjs",
     "backfill": "tsx src/cli.ts backfill",
     "seed:local": "node scripts/generate-local-db.mjs"

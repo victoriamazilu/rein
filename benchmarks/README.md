@@ -1,8 +1,8 @@
-# AgentGit Benchmark
+# Rein Benchmark
 
 This benchmark is meant to prove the project value in a simple, research-aligned way:
 
-> Can AgentGit find useful project memory better than grep-style search over normal Git commit messages?
+> Can Rein find useful project memory better than grep-style search over normal Git commit messages?
 
 It asks real project-history questions, then checks whether the right commit appears near the top of the search results.
 
@@ -33,19 +33,19 @@ benchmarks/latest-report.md
 
 The headline benchmark compares:
 
-1. **AgentGit**, which searches AI-written memory notes.
+1. **Rein**, which searches AI-written memory notes.
 2. **Exact grep**, using `git log --grep` over normal commit messages.
 
-The report also includes a stronger custom keyword check over commit messages. That extra column is there to keep the benchmark honest: sometimes commit messages alone are enough, and sometimes AgentGit's richer memory helps more.
+The report also includes a stronger custom keyword check over commit messages. That extra column is there to keep the benchmark honest: sometimes commit messages alone are enough, and sometimes Rein's richer memory helps more.
 
 The difference is:
 
 - **grep** needs the user to type words that already appear in history.
-- **AgentGit search** can find related memory by meaning.
+- **Rein search** can find related memory by meaning.
 
-If AgentGit wins, the takeaway is easy to explain:
+If Rein wins, the takeaway is easy to explain:
 
-> AgentGit helps people and agents find the reason behind old code changes better than grep-style search alone.
+> Rein helps people and agents find the reason behind old code changes better than grep-style search alone.
 
 ## Why These Metrics
 
@@ -60,9 +60,9 @@ Useful references:
 - Stanford Introduction to Information Retrieval: evaluation of [unranked](https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-in-information-retrieval-1.html) and [ranked](https://nlp.stanford.edu/IR-book/html/htmledition/evaluation-of-ranked-retrieval-results-1.html) search results.
 - [NIST TREC](https://trec.nist.gov/overview.html): the long-running benchmark program for text retrieval systems.
 
-## Grep vs AgentGit
+## Grep vs Rein
 
-This benchmark separates grep-style search from AgentGit search on purpose.
+This benchmark separates grep-style search from Rein search on purpose.
 
 **grep** is exact text matching. It works when you already know the words that appear in history.
 
@@ -82,14 +82,14 @@ How can I visualize memory connections between commits?
 
 Those exact words may not exist in Git history. That is where grep misses.
 
-**AgentGit** searches memory by meaning. It can connect `visualize memory connections` to commits about an `embedding graph` even when the wording is different.
+**Rein** searches memory by meaning. It can connect `visualize memory connections` to commits about an `embedding graph` even when the wording is different.
 
 ## Add More Questions
 
 Edit:
 
 ```txt
-benchmarks/agentgit-search.json
+benchmarks/rein-search.json
 ```
 
 Add beginner-style questions and the commit SHA prefixes that should answer them.

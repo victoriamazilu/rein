@@ -1,4 +1,4 @@
-# Rein / AgentGit
+# Rein
 
 Rein is an agent-native memory layer on top of git.
 
@@ -7,13 +7,13 @@ Git stores code history. Rein stores semantic memory about commits so future age
 The CLI command is:
 
 ```bash
-agentgit
+rein
 ```
 
 Core primitive:
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 This creates a real git commit and stores an `AgentCommit` record in Supabase.
@@ -23,19 +23,19 @@ This creates a real git commit and stores an `AgentCommit` record in Supabase.
 ## Current commands
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 Distills staged changes with an LLM, creates a git commit, embeds the memory text, and stores it in Supabase.
 
 ```bash
-agentgit search "auth middleware"
+rein search "auth middleware"
 ```
 
 Hybrid semantic + keyword search over stored AgentCommit memories.
 
 ```bash
-agentgit show <sha>
+rein show <sha>
 ```
 
 Show the stored memory for a git commit SHA.
@@ -87,8 +87,8 @@ OPENAI_API_KEY=your-openai-key
 Optional:
 
 ```bash
-AGENTGIT_MODEL=gpt-4o-mini
-AGENTGIT_EMBEDDING_MODEL=text-embedding-3-small
+REIN_MODEL=gpt-4o-mini
+REIN_EMBEDDING_MODEL=text-embedding-3-small
 DATABASE_URL=postgresql://...
 ```
 
@@ -169,13 +169,13 @@ npm link
 Then verify:
 
 ```bash
-agentgit --help
+rein --help
 ```
 
 Expected:
 
 ```txt
-Usage: agentgit [options] [command]
+Usage: rein [options] [command]
 
 Commands:
   commit [options]
@@ -190,17 +190,17 @@ Commands:
 You can run without linking:
 
 ```bash
-npm run agentgit -- --help
-npm run agentgit -- search "auth middleware"
-npm run agentgit -- commit
+npm run rein -- --help
+npm run rein -- search "auth middleware"
+npm run rein -- commit
 ```
 
 After linking, use:
 
 ```bash
-agentgit --help
-agentgit search "auth middleware"
-agentgit commit
+rein --help
+rein search "auth middleware"
+rein commit
 ```
 
 ---
@@ -212,7 +212,7 @@ agentgit commit
 Search prior project memory:
 
 ```bash
-agentgit search "auth middleware"
+rein search "auth middleware"
 ```
 
 ### After finishing a task
@@ -226,7 +226,7 @@ git add <files>
 Create git commit + semantic memory:
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 Flow:
@@ -243,7 +243,7 @@ staged diff
 Dry run:
 
 ```bash
-agentgit commit --dry-run
+rein commit --dry-run
 ```
 
 This prints the generated commit message and memory without committing.
@@ -261,7 +261,7 @@ npm run build
 Run search through npm:
 
 ```bash
-npm run agentgit -- search "auth middleware"
+npm run rein -- search "auth middleware"
 ```
 
 Link CLI:
@@ -273,8 +273,8 @@ npm link
 Use linked CLI:
 
 ```bash
-agentgit --help
-agentgit search "auth middleware"
+rein --help
+rein search "auth middleware"
 ```
 
 Apply DB setup:
@@ -296,7 +296,7 @@ npm install
 npm run db:setup
 ```
 
-### `agentgit search` returns `Error: [object Object]`
+### `rein search` returns `Error: [object Object]`
 
 This usually means Supabase returned an error object. Common causes:
 
@@ -322,11 +322,11 @@ npm run build
 
 ### `No staged changes`
 
-`agentgit commit` only commits staged changes. Run:
+`rein commit` only commits staged changes. Run:
 
 ```bash
 git add <files>
-agentgit commit
+rein commit
 ```
 
 ### Supabase insert fails after git commit succeeds
@@ -334,10 +334,10 @@ agentgit commit
 The git commit is not rolled back. Rein writes a recovery file to:
 
 ```txt
-.agentgit/pending/<sha>.json
+.rein/pending/<sha>.json
 ```
 
-A future `agentgit sync` command can upload these pending memories.
+A future `rein sync` command can upload these pending memories.
 
 ---
 
@@ -346,7 +346,7 @@ A future `agentgit sync` command can upload these pending memories.
 ```txt
 rein/
 ├── src/
-│   ├── cli.ts      # agentgit commands
+│   ├── cli.ts      # rein commands
 │   ├── db.ts       # Supabase client/store
 │   ├── git.ts      # git helpers
 │   ├── llm.ts      # OpenAI distillation + embeddings
@@ -364,7 +364,7 @@ rein/
 
 ## Notes
 
-- Use `agentgit commit`, not `git commit`, when an agent finishes a task.
+- Use `rein commit`, not `git commit`, when an agent finishes a task.
 - Git remains the source of truth for code.
 - Supabase stores semantic memory.
 - Search is hybrid: OpenAI embeddings + Postgres full-text search.

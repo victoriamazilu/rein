@@ -23,7 +23,7 @@ import { distillAgentCommit, embedText } from "./llm.js";
 const program = new Command();
 
 program
-  .name("agentgit")
+  .name("rein")
   .description("Agent-native semantic memory on top of git commits")
   .version("0.1.0");
 
@@ -43,7 +43,7 @@ program
 
       const status = getStatusShort();
       if (hasUnstagedChanges()) {
-        console.warn("⚠ Unstaged changes detected. agentgit commit will only include staged changes.");
+        console.warn("⚠ Unstaged changes detected. rein commit will only include staged changes.");
       }
 
       const recentCommits = getRecentCommits();
@@ -81,7 +81,7 @@ program
             embedding,
           }));
 
-        console.log("\n✓ AgentGit commit complete");
+        console.log("\n✓ Rein commit complete");
         console.log(`Repo: ${agentCommit.repo}`);
         console.log(`SHA: ${agentCommit.sha}`);
         if (agentCommit.title) console.log(`Title: ${agentCommit.title}`);
@@ -90,7 +90,7 @@ program
       } catch (err) {
         writePendingAgentCommit(sha, { repo, sha, ...distilled, created_at: new Date().toISOString() });
         console.warn("\n⚠ Git commit was created, but agent_commits storage failed.");
-        console.warn(`Saved pending memory to .agentgit/pending/${sha}.json`);
+        console.warn(`Saved pending memory to .rein/pending/${sha}.json`);
         throw err;
       }
     } catch (err) {
@@ -102,7 +102,7 @@ program
   .command("search")
   .description("Hybrid semantic + keyword search over agent_commits")
   .argument("<query...>", "Search query")
-  .option("-n, --count <count>", "Number of results", "10")
+  .option("-n, --count <count>", "Number of results", "3")
   .option("--repo <repo>", "Repository id (default: origin remote or git root path)")
   .action(async (queryParts: string[], opts: { count: string; repo?: string }) => {
     const query = queryParts.join(" ");
@@ -140,7 +140,7 @@ program
 program
   .command("graph")
   .description("Generate an interactive HTML graph of agent_commits connections")
-  .option("-o, --output <path>", "Output HTML path", ".agentgit/memory-graph.html")
+  .option("-o, --output <path>", "Output HTML path", ".rein/memory-graph.html")
   .option("-q, --query <query>", "Highlight search results for a query (simulates agent lookup)")
   .option(
     "--threshold <similarity>",
@@ -159,7 +159,7 @@ program
       const store = new AgentCommitStore(createSupabase());
       const commits = await store.listByRepo(repo);
       if (commits.length === 0) {
-        console.log(`No agent_commits found for ${repo}. Run \`agentgit commit\` first.`);
+        console.log(`No agent_commits found for ${repo}. Run \`rein commit\` first.`);
         return;
       }
 
@@ -175,7 +175,7 @@ program
         );
       }
 
-      writeGraphHtml(opts.output, graph, `AgentGit Memory Graph — ${repo}`);
+      writeGraphHtml(opts.output, graph, `Rein Memory Graph — ${repo}`);
       console.log(`Wrote memory graph (${graph.nodes.length} nodes, ${graph.edges.length} edges)`);
       console.log(`Open: ${opts.output}`);
       if (opts.query) {
@@ -331,7 +331,7 @@ function formatScore(score: number): string {
 }
 
 export function writePendingAgentCommit(sha: string, value: unknown): void {
-  const dir = join(process.cwd(), ".agentgit", "pending");
+  const dir = join(process.cwd(), ".rein", "pending");
   mkdirSync(dir, { recursive: true });
   writeFileSync(join(dir, `${sha}.json`), JSON.stringify(value, null, 2));
 }

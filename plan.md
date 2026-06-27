@@ -1,13 +1,13 @@
-# AgentGit MVP Plan
+# Rein MVP Plan
 
 ## Product Goal
 
-Build `agentgit`, a CLI that augments normal git workflows with durable semantic memory for coding agents.
+Build `rein`, a CLI that augments normal git workflows with durable semantic memory for coding agents.
 
 Core primitive:
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 This should:
@@ -18,7 +18,7 @@ This should:
 4. map the resulting git SHA to the `AgentCommit`
 5. store the metadata and embedding in Supabase
 
-Git remains the source of truth for code history. AgentGit stores semantic project memory.
+Git remains the source of truth for code history. Rein stores semantic project memory.
 
 ---
 
@@ -27,19 +27,19 @@ Git remains the source of truth for code history. AgentGit stores semantic proje
 ### Commands
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 Create a git commit and AgentCommit memory.
 
 ```bash
-agentgit search "query"
+rein search "query"
 ```
 
 Hybrid semantic + keyword search over AgentCommit memory.
 
 ```bash
-agentgit show <sha>
+rein show <sha>
 ```
 
 Show stored AgentCommit metadata for a commit.
@@ -90,9 +90,9 @@ Recommended:
 Set up commands:
 
 ```bash
-agentgit commit
-agentgit search
-agentgit show
+rein commit
+rein search
+rein show
 ```
 
 Use a CLI framework such as:
@@ -114,8 +114,8 @@ OPENAI_API_KEY=
 Optional later:
 
 ```bash
-AGENTGIT_MODEL=
-AGENTGIT_EMBEDDING_MODEL=
+REIN_MODEL=
+REIN_EMBEDDING_MODEL=
 ```
 
 ---
@@ -230,7 +230,7 @@ as $$
 $$;
 ```
 
-### 2. Implement `agentgit search`
+### 2. Implement `rein search`
 
 Flow:
 
@@ -242,7 +242,7 @@ Flow:
 Example:
 
 ```bash
-agentgit search "how do I add admin-only routes?"
+rein search "how do I add admin-only routes?"
 ```
 
 Output:
@@ -261,7 +261,7 @@ Relevant AgentCommits:
 
 ---
 
-## Phase 4: `agentgit commit`
+## Phase 4: `rein commit`
 
 Use Option A:
 
@@ -400,7 +400,7 @@ If git commit succeeds but Supabase insert fails:
 - write a local recovery file, e.g.
 
 ```txt
-.agentgit/pending/<sha>.json
+.rein/pending/<sha>.json
 ```
 
 Later command can sync it.
@@ -409,12 +409,12 @@ Do not silently lose memory.
 
 ---
 
-## Phase 5: `agentgit show`
+## Phase 5: `rein show`
 
 Command:
 
 ```bash
-agentgit show <sha>
+rein show <sha>
 ```
 
 Behavior:
@@ -444,7 +444,7 @@ Use requireRole for future protected routes. Avoid duplicating role checks in ha
 Add local pending memory directory:
 
 ```txt
-.agentgit/pending/
+.rein/pending/
 ```
 
 If memory storage fails after commit creation, save:
@@ -463,7 +463,7 @@ If memory storage fails after commit creation, save:
 Later add:
 
 ```bash
-agentgit sync
+rein sync
 ```
 
 This will:
@@ -482,11 +482,11 @@ This can be post-MVP, but design for it now.
 1. Create CLI skeleton
 2. Add Supabase schema/migrations
 3. Implement embedding helper
-5. Implement `agentgit search`
+5. Implement `rein search`
 6. Implement git helpers
 7. Implement LLM distillation helper
-8. Implement `agentgit commit`
-9. Implement `agentgit show`
+8. Implement `rein commit`
+9. Implement `rein show`
 10. Add local recovery for failed Supabase inserts
 11. Add tests or fixture-based command checks
 
@@ -494,12 +494,12 @@ This can be post-MVP, but design for it now.
 
 ## MVP Acceptance Criteria
 
-### `agentgit commit`
+### `rein commit`
 
 Given staged changes, running:
 
 ```bash
-agentgit commit
+rein commit
 ```
 
 should:
@@ -511,12 +511,12 @@ should:
 - store the record in Supabase
 - print the new SHA and memory summary
 
-### `agentgit search`
+### `rein search`
 
 Given stored AgentCommits, running:
 
 ```bash
-agentgit search "auth middleware"
+rein search "auth middleware"
 ```
 
 should:
@@ -525,12 +525,12 @@ should:
 - perform hybrid search
 - return relevant commits ranked by combined score
 
-### `agentgit show`
+### `rein show`
 
 Given a SHA, running:
 
 ```bash
-agentgit show <sha>
+rein show <sha>
 ```
 
 should print the stored semantic memory for that commit.
@@ -547,7 +547,7 @@ Not MVP:
 - team-shared memory policies
 - LLM reranking
 - automatic pre-task context injection
-- `agentgit sync`
-- `agentgit remember HEAD` for retroactive memory creation
+- `rein sync`
+- `rein remember HEAD` for retroactive memory creation
 - local-first mode
 - richer schema with decisions, risks, tests, and symbols touched

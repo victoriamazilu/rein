@@ -91,7 +91,7 @@ const repos = [
     language: "TypeScript",
     defaultBranch: "main",
     description:
-      "Workspace analytics whose Semantic Embedding Commit Graph links scorecards, memory coverage, search weighting, filters, and onboarding as related product decisions. AgentGit can navigate those concept clusters by intent, so a query about repository health or backfill reaches connected changes even when the commit text differs; GrepGit would only return direct keyword matches.",
+      "Workspace analytics whose Semantic Embedding Commit Graph links scorecards, memory coverage, search weighting, filters, and onboarding as related product decisions. Rein can navigate those concept clusters by intent, so a query about repository health or backfill reaches connected changes even when the commit text differs; GrepGit would only return direct keyword matches.",
     commitCount: 460,
     startDaysAgo: 920,
     topicWeights: { workspace: 0.32, interface: 0.22, search: 0.16, fixtures: 0.12, traceability: 0.1, release: 0.08 },
@@ -104,7 +104,7 @@ const repos = [
     language: "Python",
     defaultBranch: "main",
     description:
-      "Batch evaluation service whose commit graph connects rubric calibration, prompt traces, dataset freshness, parallel workers, and regression fixtures as one evaluation pipeline. AgentGit uses embedding relationships to retrieve conceptually similar changes across scoring, evidence, and fixture export; GrepGit would require the developer to guess exact terms such as rubric, trace, or regression.",
+      "Batch evaluation service whose commit graph connects rubric calibration, prompt traces, dataset freshness, parallel workers, and regression fixtures as one evaluation pipeline. Rein uses embedding relationships to retrieve conceptually similar changes across scoring, evidence, and fixture export; GrepGit would require the developer to guess exact terms such as rubric, trace, or regression.",
     commitCount: 380,
     startDaysAgo: 780,
     topicWeights: { evaluation: 0.42, fixtures: 0.22, search: 0.14, traceability: 0.1, workspace: 0.06, interface: 0.06 },
@@ -117,7 +117,7 @@ const repos = [
     language: "Go",
     defaultBranch: "main",
     description:
-      "Release-readiness dashboard whose Semantic Embedding Commit Graph ties deployment risk, incident grouping, release decision backfill, service cards, stale statuses, and audit export into a traceable operational history. AgentGit follows those semantic links to explain why a release view changed and which commits share intent; GrepGit can find matching words but not the cross-commit release workflow.",
+      "Release-readiness dashboard whose Semantic Embedding Commit Graph ties deployment risk, incident grouping, release decision backfill, service cards, stale statuses, and audit export into a traceable operational history. Rein follows those semantic links to explain why a release view changed and which commits share intent; GrepGit can find matching words but not the cross-commit release workflow.",
     commitCount: 430,
     startDaysAgo: 860,
     topicWeights: { release: 0.36, traceability: 0.2, workspace: 0.12, interface: 0.12, policy: 0.1, fixtures: 0.1 },
@@ -130,7 +130,7 @@ const repos = [
     language: "Rust",
     defaultBranch: "main",
     description:
-      "Release policy service whose graph connects exception queues, regional deployment windows, approval rationale, and dry-run blocking as related control-plane decisions. AgentGit retrieves these architecture and compliance relationships by meaning, which helps agents reason over release intent and traceability; GrepGit would surface only files or commits containing the same policy words.",
+      "Release policy service whose graph connects exception queues, regional deployment windows, approval rationale, and dry-run blocking as related control-plane decisions. Rein retrieves these architecture and compliance relationships by meaning, which helps agents reason over release intent and traceability; GrepGit would surface only files or commits containing the same policy words.",
     commitCount: 340,
     startDaysAgo: 700,
     topicWeights: { policy: 0.44, release: 0.24, traceability: 0.18, search: 0.06, fixtures: 0.05, interface: 0.03 },

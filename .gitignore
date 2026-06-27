@@ -3,5 +3,5 @@ dist/
 .next/
 .env
 buzz.txt
-.agentgit/
+.rein/
 *.swp

@@ -36,7 +36,7 @@ export function AccountView() {
             Clone it locally: <code>git clone &lt;url&gt;</code>
           </li>
           <li>
-            Run <code>agentgit backfill</code> to populate agent_commits.
+            Run <code>rein backfill</code> to populate agent_commits.
           </li>
         </ol>
       </section>

@@ -1,9 +1,9 @@
 import OpenAI from "openai";
 import type { DistilledAgentCommit } from "./types.js";
 
-const DEFAULT_MODEL = process.env.AGENTGIT_MODEL ?? "gpt-4o-mini";
+const DEFAULT_MODEL = process.env.REIN_MODEL ?? process.env.AGENTGIT_MODEL ?? "gpt-4o-mini";
 const DEFAULT_EMBEDDING_MODEL =
-  process.env.AGENTGIT_EMBEDDING_MODEL ?? "text-embedding-3-small";
+  process.env.REIN_EMBEDDING_MODEL ?? process.env.AGENTGIT_EMBEDDING_MODEL ?? "text-embedding-3-small";
 
 function openai(): OpenAI {
   if (!process.env.OPENAI_API_KEY) throw new Error("Missing OPENAI_API_KEY");

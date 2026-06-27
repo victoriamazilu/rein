@@ -41,12 +41,12 @@ export async function generateRepositoryGraphHtml(
   const commits = (data ?? []) as AgentCommit[];
   if (commits.length === 0) {
     throw new Error(
-      `No agent_commits for ${repoId}. Clone locally and run \`agentgit backfill --repo ${repoId}\`.`
+      `No agent_commits for ${repoId}. Clone locally and run \`rein backfill --repo ${repoId}\`.`
     );
   }
 
   const graph = buildMemoryGraph(commits, { similarityThreshold: threshold });
-  const title = `AgentGit Memory Graph — ${repoId}`;
+  const title = `Rein Memory Graph — ${repoId}`;
 
   return {
     html: renderGraphHtml(graph, title),

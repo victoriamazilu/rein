@@ -2,6 +2,7 @@
   --bg: #ffffff;
   --bg-subtle: #f6f8fa;
   --bg-muted: #f6f8fa;
+  --bg-elevated: #ffffff;
   --border: #d0d7de;
   --border-muted: #eaeef2;
   --text: #1f2328;
@@ -2479,30 +2480,41 @@ code {
   display: grid;
   place-items: center;
   padding: 1rem;
-  background: rgb(26 26 26 / 0.28);
-  backdrop-filter: blur(4px);
+  background: rgb(31 35 40 / 0.42);
 }
 
 .dialog {
   width: min(480px, 100%);
   border: 1px solid var(--border);
-  border-radius: calc(var(--radius) + 4px);
-  background: var(--bg-elevated);
+  border-radius: calc(var(--radius) + 2px);
+  background: var(--bg);
   box-shadow: var(--shadow-panel);
+  color: var(--text);
+  overflow: hidden;
 }
 
 .dialog-header {
-  padding: 1.25rem 1.25rem 0;
+  padding: 1.15rem 1.25rem 1rem;
+  border-bottom: 1px solid var(--border-muted);
+  background: var(--bg-subtle);
 }
 
 .dialog-header h2 {
   margin: 0 0 0.35rem;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--text);
+}
+
+.dialog-header .muted {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.45;
 }
 
 .dialog-form {
   padding: 1.25rem;
+  background: var(--bg);
 }
 
 .field {
@@ -2510,6 +2522,7 @@ code {
   gap: 0.4rem;
   margin-bottom: 0.55rem;
   font-weight: 500;
+  color: var(--text);
 }
 
 .field input {
@@ -2519,22 +2532,39 @@ code {
   background: var(--bg);
   color: var(--text);
   font: inherit;
+  box-shadow: var(--shadow-soft);
+}
+
+.field input::placeholder {
+  color: var(--text-muted);
 }
 
 .field input:focus {
-  border-color: var(--text);
+  border-color: var(--accent);
   outline: none;
-  box-shadow: 0 0 0 3px rgb(26 26 26 / 0.08);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
 }
 
 .field-hint {
   margin: 0 0 0.85rem;
   color: var(--text-muted);
   font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.field-hint code,
+.dialog-header code {
+  background: var(--bg);
+  border-color: var(--border-muted);
+  color: var(--text);
 }
 
 .form-error {
   margin: 0 0 0.85rem;
+  padding: 0.65rem 0.75rem;
+  border: 1px solid color-mix(in srgb, #9b4d4d 28%, var(--border));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, #9b4d4d 8%, var(--bg));
   color: #9b4d4d;
   font-size: 0.88rem;
 }
@@ -2543,6 +2573,9 @@ code {
   display: flex;
   justify-content: flex-end;
   gap: 0.55rem;
+  margin-top: 0.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--border-muted);
 }
 
 .page-actions-group {

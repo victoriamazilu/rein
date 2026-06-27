@@ -1,10 +1,10 @@
 {
-  "name": "AgentGit search value benchmark",
-  "description": "A project-memory benchmark that checks whether AgentGit finds the commit context a new teammate or future agent would need.",
+  "name": "Rein search value benchmark",
+  "description": "A project-memory benchmark that checks whether Rein finds the commit context a new teammate or future agent would need.",
   "k": 5,
   "queries": [
     {
-      "query": "What is this project and how does AgentGit remember code decisions?",
+      "query": "What is this project and how does Rein remember code decisions?",
       "relevant": ["379a3d1", "a69f576", "556e9cb"],
       "why": "A beginner asks for the original product plan and purpose."
     },
@@ -39,12 +39,12 @@
       "why": "A developer is debugging setup and migration behavior."
     },
     {
-      "query": "How do we backfill AgentGit memory from old git history?",
+      "query": "How do we backfill Rein memory from old git history?",
       "relevant": ["0d315da"],
-      "why": "A maintainer wants to create memories for commits that happened before AgentGit was installed."
+      "why": "A maintainer wants to create memories for commits that happened before Rein was installed."
     },
     {
-      "query": "How does AgentGit separate memories for different repositories?",
+      "query": "How does Rein separate memories for different repositories?",
       "relevant": ["62975e3"],
       "why": "A team wants to avoid mixing memories from different projects."
     },

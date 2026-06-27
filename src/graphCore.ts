@@ -229,7 +229,7 @@ export function addSearchEdges(
     title: searchTitle,
     label: shortenGraphLabel(searchTitle, 22),
     intent: "Search query (simulated agent lookup)",
-    notes: "Edges show what an agentgit search would surface.",
+    notes: "Edges show what a rein search would surface.",
     createdAt: new Date().toISOString(),
     embedding: null,
   };
@@ -249,7 +249,7 @@ export function addSearchEdges(
   };
 }
 
-export function renderGraphHtml(graph: MemoryGraph, title = "AgentGit Memory Graph"): string {
+export function renderGraphHtml(graph: MemoryGraph, title = "Rein Memory Graph"): string {
   const threshold = graph.semanticThreshold;
   const payload = JSON.stringify(graph);
   return `<!DOCTYPE html>
