@@ -1,0 +1,398 @@
+:root {
+  --bg: #f7f6f1;
+  --panel: #fbfaf6;
+  --text: #111111;
+  --muted: #706f6a;
+  --line: #dedbd2;
+  --line-soft: #ece9e1;
+  --accent: #2f35ff;
+  --accent-soft: #ececff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+  color: var(--text);
+  background:
+    linear-gradient(90deg, transparent 0 19.9%, var(--line-soft) 20%, transparent 20.1% 49.9%, var(--line-soft) 50%, transparent 50.1% 84.9%, var(--line-soft) 85%, transparent 85.1%),
+    var(--bg);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  display: block;
+}
+
+code {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.1rem 0.35rem;
+  background: var(--panel);
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 0.82rem;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
+}
+
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  border-right: 1px solid var(--line);
+  padding: 2rem 1.4rem;
+}
+
+.logo,
+.account-link,
+.repo-nav-link {
+  display: flex;
+  align-items: center;
+}
+
+.logo {
+  gap: 0.7rem;
+  width: fit-content;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.logo-mark {
+  display: grid;
+  grid-template-columns: repeat(3, 5px);
+  gap: 3px;
+}
+
+.logo-mark span {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--text);
+}
+
+.repo-nav {
+  display: grid;
+  gap: 0.35rem;
+  margin-top: 3.5rem;
+}
+
+.nav-label,
+.eyebrow,
+.section-number,
+.repo-card small,
+.commit-item p,
+.commit-item time,
+.stats-grid dt {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.nav-label,
+.eyebrow {
+  margin: 0 0 0.65rem;
+  text-transform: uppercase;
+}
+
+.repo-nav-link {
+  justify-content: space-between;
+  gap: 0.8rem;
+  border-left: 2px solid transparent;
+  padding: 0.55rem 0 0.55rem 0.75rem;
+  font-size: 0.95rem;
+}
+
+.repo-nav-link:hover,
+.repo-nav-link:focus-visible {
+  border-left-color: var(--accent);
+  color: var(--accent);
+}
+
+.repo-nav-link small {
+  color: var(--muted);
+}
+
+.workspace {
+  min-width: 0;
+}
+
+.topbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 1.4rem 2rem 0;
+}
+
+.account-link {
+  gap: 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem 0.35rem 0.4rem;
+  background: color-mix(in srgb, var(--panel) 80%, transparent);
+  font-size: 0.92rem;
+}
+
+.account-link img {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+}
+
+main {
+  width: min(1040px, calc(100vw - 300px));
+  margin: 7rem auto 6rem;
+}
+
+.page-stack {
+  display: grid;
+  gap: 4.5rem;
+}
+
+.hero-section,
+.content-section {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 1.6rem;
+}
+
+.hero-section {
+  min-height: 260px;
+  align-items: start;
+}
+
+.hero-section.compact {
+  min-height: 180px;
+}
+
+.section-number {
+  padding-top: 0.55rem;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 780px;
+  margin-bottom: 1.55rem;
+  font-size: clamp(2.5rem, 5rem, 5rem);
+  line-height: 0.95;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+h2 {
+  margin-bottom: 0;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+h3 {
+  margin-bottom: 0.55rem;
+  font-size: 1.05rem;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.lede {
+  max-width: 740px;
+  color: #2d2c29;
+  font-size: 1.15rem;
+  line-height: 1.5;
+}
+
+.section-heading {
+  margin-bottom: 1.2rem;
+}
+
+.repo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.repo-card {
+  display: grid;
+  gap: 1.45rem;
+  min-height: 220px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 1.3rem;
+  background: color-mix(in srgb, var(--panel) 72%, transparent);
+}
+
+.repo-card:hover,
+.repo-card:focus-visible {
+  background: var(--accent-soft);
+}
+
+.repo-card p:not(.eyebrow) {
+  max-width: 33rem;
+  color: #33312d;
+  line-height: 1.45;
+}
+
+.commit-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--line);
+  list-style: none;
+}
+
+.commit-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 1rem;
+  border-bottom: 1px solid var(--line);
+  padding: 1rem 0;
+}
+
+.commit-item h3 {
+  margin-bottom: 0.35rem;
+}
+
+.commit-item p {
+  margin-bottom: 0;
+}
+
+.commit-item time {
+  white-space: nowrap;
+}
+
+.account-hero {
+  min-height: 220px;
+}
+
+.account-profile {
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+}
+
+.account-profile img {
+  width: 120px;
+  height: 120px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+}
+
+.account-profile h1 {
+  margin-bottom: 0.45rem;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.stats-grid div {
+  min-height: 150px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 1.1rem;
+}
+
+.stats-grid dt {
+  margin-bottom: 2.4rem;
+}
+
+.stats-grid dd {
+  margin: 0;
+  font-size: 2.5rem;
+  line-height: 1;
+  font-weight: 700;
+}
+
+@media (max-width: 860px) {
+  body {
+    background:
+      linear-gradient(90deg, transparent 0 49.9%, var(--line-soft) 50%, transparent 50.1%),
+      var(--bg);
+  }
+
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 1.2rem;
+  }
+
+  .repo-nav {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 1.4rem;
+  }
+
+  .nav-label {
+    grid-column: 1 / -1;
+  }
+
+  .topbar {
+    padding: 1rem 1.2rem 0;
+  }
+
+  main {
+    width: auto;
+    margin: 4rem 1.2rem 5rem;
+  }
+
+  .hero-section,
+  .content-section {
+    grid-template-columns: 1fr;
+    gap: 0.8rem;
+  }
+
+  .hero-section,
+  .hero-section.compact {
+    min-height: auto;
+  }
+
+  h1 {
+    font-size: 3rem;
+  }
+
+  .repo-grid,
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .commit-item {
+    grid-template-columns: 1fr;
+  }
+
+  .account-profile {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
